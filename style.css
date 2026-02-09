@@ -1,140 +1,61 @@
 /*帮我用html、javascript、css等语言建立一个博客网页用于记录我的文章笔记，要求支持对选定文章的实时增删查改，同时支持文章内容中代码段的特定标注和图片添加，这个网页的挂载的目标平台是GitHub Pages，所以数据的持久化通过在网页中添加按钮，在按钮上挂载git的api以实现通过网页修改git库中的数据文件*/
+/* 基础重置 */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'PingFang SC', sans-serif; background-color: #f4f7f6; color: #333; line-height: 1.6; }
+body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; background-color: #f4f7f6; color: #333; line-height: 1.6; }
 
 /* 导航栏 */
-header { background: #2c3e50; color: white; padding: 1rem 0; position: sticky; top: 0; z-index: 100; }
+header { background: #2c3e50; color: white; padding: 1rem 0; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 nav { display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: 0 auto; padding: 0 20px; }
 nav ul { display: flex; list-style: none; }
 nav ul li { margin-left: 20px; }
 nav a { color: white; text-decoration: none; font-weight: bold; }
+.admin-link { background: rgba(255, 255, 255, 0.1); padding: 5px 12px; border-radius: 4px; transition: 0.3s; }
+.admin-link:hover { background: #3498db; }
 
-/* 布局 */
+/* 布局容器 */
 .container { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; max-width: 1100px; margin: 30px auto; padding: 0 20px; }
-.admin-link {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 5px 12px;
-    border-radius: 4px;
-    transition: background 0.3s;
-}
 
-.admin-link:hover {
-    background: #3498db;
-    color: white !important;
-}
+/* 管理后台专用布局 */
+.admin-main { display: flex; gap: 20px; max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+.list-section { flex: 1; min-width: 300px; }
+.edit-section { flex: 2; position: sticky; top: 80px; height: fit-content; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
 
-/* 文章卡片 */
-.post-card { background: white; padding: 25px; margin-bottom: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-.post-card h2 { margin-bottom: 10px; color: #2c3e50; }
-.post-meta { font-size: 0.9rem; color: #7f8c8d; margin-bottom: 15px; }
-.read-more { display: inline-block; margin-top: 15px; color: #3498db; cursor: pointer; }
-
-/* 侧边栏 */
-.card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
-.tags span { background: #eee; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; margin: 3px; display: inline-block; }
-
-/* 响应式 */
-@media (max-width: 768px) {
-    .container { grid-template-columns: 1fr; }
-}
-/* 针对代码块容器 */
-pre {
-    background-color: #282c34;
-    padding: 15px;
-    border-radius: 8px;
-
-    /* 关键设置：保持换行并允许滚动 */
-    white-space: pre;
-    word-wrap: normal;
-    overflow-x: auto;
-
-    display: block; /* 确保是块级元素 */
-    line-height: 1.5;
-}
-
-/* 内部的 code 标签 */
-pre code {
-    white-space: inherit; /* 继承 pre 的换行规则 */
-}
-/* 文章内容排版优化 */
-#detail-content {
-    line-height: 1.8;
-    color: #333;
-    font-size: 1.1rem;
-}
-
-/* 专门针对 Markdown 中的代码块 */
-#detail-content pre {
-    background-color: #282c34; /* Atom One Dark 的背景色 */
-    padding: 1.2rem;
-    border-radius: 8px;
-    overflow-x: auto;
-    margin: 1.5rem 0;
-}
-
-#detail-content code {
-    font-family: 'Consolas', 'Courier New', monospace;
-}
-
-/* 行内代码样式（比如 `var a = 1`） */
-#detail-content :not(pre) > code {
-    background-color: #f3f3f3;
-    color: #e74c3c;
-    padding: 2px 4px;
-    border-radius: 4px;
-}
 /* 滑动窗口容器 */
 .scroll-window {
-    height: 500px; /* 你可以根据需要调整高度 */
-    overflow-y: auto; /* 内容超出时显示垂直滚动条 */
+    height: 550px;
+    overflow-y: auto;
     border: 1px solid #ddd;
     border-radius: 8px;
     background: #fff;
-    padding: 10px;
-
-    /* 隐藏水平滚动条（如果不需要） */
-    overflow-x: hidden;
+    margin-top: 10px;
 }
-
-/* 自定义滚动条样式（让它看起来更精致） */
-.scroll-window::-webkit-scrollbar {
-    width: 6px;
-}
-.scroll-window::-webkit-scrollbar-thumb {
-    background-color: #cbd5e0;
-    border-radius: 10px;
-}
-.scroll-window::-webkit-scrollbar-track {
-    background: #f7fafc;
-}
-
-/* 列表单条记录的样式优化 */
 .admin-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px;
-    border-bottom: 1px solid #edf2f7;
-    transition: background 0.2s;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 15px; border-bottom: 1px solid #eee;
 }
-.admin-item:hover {
-    background: #f8fafc;
-}
-.admin-main {
-    display: flex;
-    gap: 20px;
-    max-width: 1200px;
-    margin: 20px auto;
-}
+.admin-item span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 70%; }
 
-.list-section {
-    flex: 1; /* 列表占 1 份宽度 */
-    min-width: 300px;
+/* 代码块样式 - 重点修正 */
+pre {
+    background-color: #282c34 !important; /* Atom One Dark 背景 */
+    color: #abb2bf;
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+    white-space: pre; /* 保持原始换行 */
+    word-wrap: normal;
 }
+code { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9em; }
+:not(pre) > code { background: #eee; color: #e74c3c; padding: 2px 5px; border-radius: 4px; }
 
-.edit-section {
-    flex: 2; /* 编辑器占 2 份宽度 */
-    position: sticky; /* 关键：向下滚动时编辑器固定在顶部 */
-    top: 80px;
-    height: fit-content;
+/* 详情页排版 */
+#detail-content { line-height: 1.8; font-size: 1.05rem; }
+#detail-content img { max-width: 100%; border-radius: 8px; margin: 10px 0; }
+
+/* 响应式 */
+@media (max-width: 900px) {
+    .container, .admin-main { grid-template-columns: 1fr; flex-direction: column; }
+    .edit-section { position: static; }
+    .scroll-window { height: 300px; }
 }

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>文章详情</title>
+    <title>文章详情 - MyNotes</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -10,65 +10,44 @@
 </head>
 <body>
 <header>
-    <nav>
-        <div class="logo">MyNotes</div>
-        <ul><li><a href="index.html">返回首页</a></li></ul>
-    </nav>
+    <nav><div class="logo">MyNotes</div><ul><li><a href="index.html">返回首页</a></li></ul></nav>
 </header>
 
-<main class="container">
+<main class="container" style="display: block; max-width: 850px;">
     <article class="post-card">
         <h1 id="detail-title">正在加载...</h1>
         <div class="post-meta" id="detail-meta"></div>
         <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-        <div id="detail-content" style="white-space: pre-wrap;"></div> </article>
+        <div id="detail-content"></div>
+    </article>
 </main>
 
-<script src="data.js"></script>
 <script>
-    function renderPostDetail() {
-        // 1. 获取 URL 中的文章 ID (例如 post.html?id=0)
+    // 强制刷新缓存读取数据
+    document.write('<script src="data.js?v=' + Date.now() + '"><\/script>');
+</script>
+<script>
+    window.onload = function() {
         const params = new URLSearchParams(window.location.search);
         const id = params.get('id');
+        const post = window.blogPosts && window.blogPosts[id];
 
-        // 2. 检查数据是否存在
-        if (id === null || !window.blogPosts || !window.blogPosts[id]) {
-            document.getElementById('detail-title').innerText = "文章未找到";
+        if (!post) {
+            document.getElementById('detail-title').innerText = "文章不存在";
             return;
         }
 
-        const post = window.blogPosts[id];
-
-        // 3. 填充标题和元数据
+        document.title = post.title;
         document.getElementById('detail-title').innerText = post.title;
         document.getElementById('detail-meta').innerText = `${post.date} | ${post.category}`;
 
-        // 4. 配置 marked 渲染器
-        // 注意：新版 marked 的语法稍有不同，建议使用以下配置
-        const renderer = new marked.Renderer();
+        // 配置 Marked 并渲染
+        marked.setOptions({ breaks: true, gfm: true });
+        document.getElementById('detail-content').innerHTML = marked.parse(post.fullContent);
 
-        marked.setOptions({
-            highlight: function(code, lang) {
-                if (lang && hljs.getLanguage(lang)) {
-                    return hljs.highlight(code, { language: lang }).value;
-                }
-                return hljs.highlightAuto(code).value;
-            },
-            breaks: true,
-            gfm: true
-        });
-
-        // 5. 将 Markdown 内容渲染为 HTML
-        const contentArea = document.getElementById('detail-content');
-        contentArea.style.whiteSpace = "normal"; // 渲染 Markdown 后不需要预换行，交给 CSS 处理
-        contentArea.innerHTML = marked.parse(post.fullContent);
-
-        // 6. 触发代码高亮
+        // 执行代码高亮
         hljs.highlightAll();
-    }
-
-    // 确保在数据加载后执行
-    window.onload = renderPostDetail;
+    };
 </script>
 </body>
 </html>
