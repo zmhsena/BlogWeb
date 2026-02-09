@@ -7,11 +7,11 @@ window.blogPosts = [
     "fullContent": "5"
   },
   {
-    "title": "3",
-    "category": "3",
+    "title": "4",
+    "category": "4",
     "date": "2026/2/9",
-    "excerpt": "3...",
-    "fullContent": "3"
+    "excerpt": "4...",
+    "fullContent": "4"
   },
   {
     "title": "2",
