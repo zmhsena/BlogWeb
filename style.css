@@ -37,30 +37,24 @@ nav a { color: white; text-decoration: none; font-weight: bold; }
 @media (max-width: 768px) {
     .container { grid-template-columns: 1fr; }
 }
-/* 代码块容器 */
+/* 针对代码块容器 */
 pre {
-    background-color: #282c34; /* 匹配 Atom One Dark 背景色 */
+    background-color: #282c34;
     padding: 15px;
     border-radius: 8px;
-    overflow-x: auto; /* 超长代码显示滚动条 */
-    margin: 20px 0;
+
+    /* 关键设置：保持换行并允许滚动 */
+    white-space: pre;
+    word-wrap: normal;
+    overflow-x: auto;
+
+    display: block; /* 确保是块级元素 */
     line-height: 1.5;
 }
 
-/* 行内代码样式 (用反引号包裹的小代码) */
-code {
-    font-family: 'Consolas', 'Monaco', monospace;
-    background-color: #f0f0f0;
-    color: #e74c3c;
-    padding: 2px 5px;
-    border-radius: 4px;
-}
-
-/* 块级代码中的 code 标签恢复颜色 */
+/* 内部的 code 标签 */
 pre code {
-    background-color: transparent;
-    color: inherit;
-    padding: 0;
+    white-space: inherit; /* 继承 pre 的换行规则 */
 }
 /* 文章内容排版优化 */
 #detail-content {
