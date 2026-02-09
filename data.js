@@ -1,5 +1,12 @@
 window.blogPosts = [
   {
+    "title": "内容更新测试",
+    "date": "2026-02-09",
+    "excerpt": "啊是擦三次...",
+    "fullContent": "啊是擦三次",
+    "category": "是点苍"
+  },
+  {
     "title": "正式测试标题",
     "date": "2026-02-09",
     "excerpt": "测试内容...",
