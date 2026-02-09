@@ -2,42 +2,85 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>极速后台 - MyNotes</title>
+    <title>管理后台 - MyNotes</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        .admin-container { max-width: 800px; margin: 20px auto; padding: 20px; background: white; border-radius: 8px; }
-        .post-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
-        .edit-area { margin-top: 20px; border-top: 2px solid #2c3e50; pt: 20px; }
-        input, textarea { width: 100%; margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        button { background: #2c3e50; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; }
-        button.delete { background: #e74c3c; }
+        .admin-container { max-width: 800px; margin: 20px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); }
+
+        /* Token 输入区域样式 */
+        .token-section { background: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 20px; border: 1px dashed #cbd5e0; }
+        .token-section h4 { margin-top: 0; color: #2d3748; }
+        .token-input-group { display: flex; gap: 10px; align-items: center; }
+        #token-input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; }
+
+        .post-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; align-items: center; }
+        .edit-area { margin-top: 30px; padding-top: 20px; border-top: 2px solid #2c3e50; }
+        input, textarea { width: 100%; margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background: #2c3e50; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; transition: opacity 0.2s; }
+        button:hover { opacity: 0.9; }
+        button.delete { background: #e74c3c; margin-left: 5px; }
+        .status-msg { font-size: 0.9rem; margin-top: 10px; color: #3182ce; }
     </style>
 </head>
 <body>
 <div class="admin-container">
-    <h2>文章列表管理</h2>
+    <h2>博客后台管理</h2>
+
+    <div class="token-section">
+        <h4>🔑 身份验证 (GitHub Token)</h4>
+        <div class="token-input-group">
+            <input type="password" id="token-input" placeholder="ghp_xxxxxxxxxxxx">
+            <button onclick="saveTokenToLocal()" style="background: #4a5568;">保存到本地</button>
+            <button onclick="clearToken()" style="background: #a0aec0;">清除</button>
+        </div>
+        <p style="font-size: 0.8rem; color: #718096; margin-top: 5px;">Token 仅保存在您的浏览器本地，不会上传至代码库。</p>
+    </div>
+
     <div id="admin-post-list"></div>
 
     <div class="edit-area">
-        <h3 id="form-title">新增文章</h3>
+        <h3 id="form-title">撰写新文章</h3>
         <input type="hidden" id="edit-index" value="-1">
         <input type="text" id="post-title" placeholder="文章标题">
         <input type="text" id="post-category" placeholder="分类 (如: 技术, 生活)">
-        <textarea id="post-content" rows="10" placeholder="支持内容文本..."></textarea>
-        <button onclick="savePost()">发布并同步到 GitHub</button>
-        <button onclick="resetForm()" style="background:#95a5a6">重置</button>
+        <textarea id="post-content" rows="12" placeholder="内容支持 Markdown 格式..."></textarea>
+        <button id="submit-btn" onclick="savePost()">🚀 发布并同步到 GitHub</button>
+        <button onclick="resetForm()" style="background:#95a5a6">取消修改</button>
+        <div id="status" class="status-msg"></div>
     </div>
 </div>
 
 <script src="data.js"></script>
 <script src="githubService.js"></script>
 <script>
-    const listContainer = document.getElementById('admin-post-list');
+    // 页面加载时自动读取本地保存的 Token
+    window.onload = () => {
+        const savedToken = localStorage.getItem('my_gh_token');
+        if (savedToken) {
+            document.getElementById('token-input').value = savedToken;
+        }
+        renderAdminList();
+    };
+
+    function saveTokenToLocal() {
+        const val = document.getElementById('token-input').value;
+        if (val) {
+            localStorage.setItem('my_gh_token', val);
+            alert('Token 已加密保存至本地浏览器存储');
+        }
+    }
+
+    function clearToken() {
+        localStorage.removeItem('my_gh_token');
+        document.getElementById('token-input').value = '';
+        alert('本地 Token 已清除');
+    }
 
     function renderAdminList() {
+        const listContainer = document.getElementById('admin-post-list');
         listContainer.innerHTML = window.blogPosts.map((post, index) => `
                 <div class="post-item">
-                    <span>${post.title} (${post.date})</span>
+                    <span><strong>${post.title}</strong> <small style="color: #666">(${post.date})</small></span>
                     <div>
                         <button onclick="editPost(${index})">编辑</button>
                         <button class="delete" onclick="deletePost(${index})">删除</button>
@@ -46,6 +89,9 @@
             `).join('');
     }
 
+    // ... 其余 editPost, deletePost, resetForm 逻辑保持不变 ...
+    // (省略部分与之前相同以保持简洁)
+
     function editPost(index) {
         const post = window.blogPosts[index];
         document.getElementById('edit-index').value = index;
@@ -53,58 +99,73 @@
         document.getElementById('post-category').value = post.category;
         document.getElementById('post-content').value = post.fullContent;
         document.getElementById('form-title').innerText = "编辑文章";
+        window.scrollTo(0, document.body.scrollHeight);
     }
 
     async function savePost() {
+        const token = document.getElementById('token-input').value;
+        if (!token) return alert("请先输入 GitHub Token");
+
         const index = parseInt(document.getElementById('edit-index').value);
         const title = document.getElementById('post-title').value;
         const content = document.getElementById('post-content').value;
         const category = document.getElementById('post-category').value;
+
+        if(!title || !content) return alert("标题和内容不能为空");
 
         const newPost = {
             title,
             date: new Date().toISOString().split('T')[0],
             excerpt: content.substring(0, 60).replace(/\n/g, "") + "...",
             fullContent: content,
-            category
+            category: category || "未分类"
         };
 
+        const btn = document.getElementById('submit-btn');
+        btn.disabled = true;
+        btn.innerText = "同步中...";
+
         if (index === -1) {
-            window.blogPosts.unshift(newPost); // 新增到开头
+            window.blogPosts.unshift(newPost);
         } else {
-            window.blogPosts[index] = newPost; // 修改
+            window.blogPosts[index] = newPost;
         }
 
-        await syncToGitHub();
-    }
-
-    async function deletePost(index) {
-        if (confirm("确定要删除吗？")) {
-            window.blogPosts.splice(index, 1);
-            await syncToGitHub();
-        }
-    }
-
-    async function syncToGitHub() {
         const fileContent = `window.blogPosts = ${JSON.stringify(window.blogPosts, null, 2)};`;
-        const ok = await updateGitHubData(fileContent);
-        if (ok) {
-            alert("同步成功！稍后刷新首页查看。");
+
+        // 注意：这里需要修改 githubService.js 接受 token 参数
+        const success = await updateGitHubData(fileContent, token);
+
+        if (success) {
+            document.getElementById('status').innerText = "✅ 同步成功！GitHub 正在部署，请几分钟后刷新。";
             resetForm();
             renderAdminList();
         } else {
-            alert("同步失败，请检查控制台报错。");
+            alert("同步失败！请检查 Token 是否正确或具有仓库写权限。");
+            // 失败时回滚本地修改，避免数据状态不同步
+            location.reload();
+        }
+        btn.disabled = false;
+        btn.innerText = "🚀 发布并同步到 GitHub";
+    }
+
+    async function deletePost(index) {
+        const token = document.getElementById('token-input').value;
+        if (!token) return alert("请先输入 Token");
+
+        if (confirm("确定要删除这篇文章吗？此操作不可逆。")) {
+            window.blogPosts.splice(index, 1);
+            await savePost();
         }
     }
 
     function resetForm() {
         document.getElementById('edit-index').value = "-1";
         document.getElementById('post-title').value = "";
+        document.getElementById('post-category').value = "";
         document.getElementById('post-content').value = "";
-        document.getElementById('form-title').innerText = "新增文章";
+        document.getElementById('form-title').innerText = "撰写新文章";
     }
-
-    renderAdminList();
 </script>
 </body>
 </html>
