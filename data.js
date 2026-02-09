@@ -7,13 +7,6 @@ window.blogPosts = [
     "category": "测试"
   },
   {
-    "title": "我的第一篇博客文章",
-    "date": "2026-02-09",
-    "excerpt": "今天终于开始搭建自己的博客了...",
-    "fullContent": "这是第一篇文章的完整内容。欢迎来到我的个人博客空间！这里是我记录生活和技术的地方。",
-    "category": "生活"
-  },
-  {
     "title": "学习 CSS Grid 布局",
     "date": "2026-02-08",
     "excerpt": "Grid 布局是前端开发中非常强大的工具...",
