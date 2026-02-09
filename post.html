@@ -21,7 +21,17 @@
         <div id="detail-content" style="white-space: pre-wrap;"></div> </article>
 </main>
 
-<script src="data.js"></script>
+<script>
+    // 动态加载 data.js，并在 URL 后添加时间戳防止缓存
+    (function() {
+        const script = document.createElement('script');
+        // Date.now() 产生一个唯一的数字，如 1700000000000
+        script.src = 'data.js?v=' + Date.now();
+        script.async = false; // 确保按顺序加载
+        document.head.appendChild(script);
+    })();
+</script>
+<script src="script.js"></script>
 <script>
     const urlParams = new URLSearchParams(window.location.search);
     const postId = urlParams.get('id');
