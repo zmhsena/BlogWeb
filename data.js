@@ -1,12 +1,5 @@
 window.blogPosts = [
   {
-    "title": "3",
-    "category": "3",
-    "date": "2026/2/9",
-    "excerpt": "3...",
-    "fullContent": "3"
-  },
-  {
     "title": "2",
     "date": "2026-02-09",
     "excerpt": "2...",
