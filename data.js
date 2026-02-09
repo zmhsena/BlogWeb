@@ -1,12 +1,5 @@
 window.blogPosts = [
   {
-    "title": "2",
-    "date": "2026-02-09",
-    "excerpt": "2...",
-    "fullContent": "2",
-    "category": "2"
-  },
-  {
     "title": "代码块测试",
     "date": "2026-02-09",
     "excerpt": "上下文```using System;namespace BlogWeb{    public class ...",
