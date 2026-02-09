@@ -88,18 +88,35 @@
 
     function renderAdminList() {
         const listContainer = document.getElementById('admin-post-list');
-        const lastScrollPos = listContainer.scrollTop; // 记录位置
-        listContainer.innerHTML = window.blogPosts.map((post, index) => `
-                <div class="post-item">
-                    <span><strong>${post.title}</strong> <small style="color: #666">(${post.date})</small></span>
-                    <div>
-                        <button onclick="editPost(${index})">编辑</button>
-                        <button class="delete" onclick="deletePost(${index})">删除</button>
-                    </div>
+        if (!listContainer) return;
+
+        // 1. 【核心修复】在此处定义 html 变量，初始为空字符串
+        let html = '';
+
+        // 2. 检查是否有数据
+        if (!window.blogPosts || window.blogPosts.length === 0) {
+            listContainer.innerHTML = '<div style="padding:20px; color:#999;">暂无文章，开始撰写第一篇吧！</div>';
+            return;
+        }
+
+        // 3. 遍历数据生成 HTML 字符串
+        window.blogPosts.forEach((post, index) => {
+            html += `
+            <div class="admin-item">
+                <div style="display:flex; flex-direction:column; max-width:70%;">
+                    <span style="font-weight:bold; color:#2c3e50;">${post.title}</span>
+                    <small style="color:#999;">${post.date} | ${post.category}</small>
                 </div>
-            `).join('');
+                <div class="admin-btns">
+                    <button onclick="editPost(${index})" style="background:#3498db; margin-right:5px;">修改</button>
+                    <button onclick="deletePost(${index})" style="background:#e74c3c;">删除</button>
+                </div>
+            </div>
+        `;
+        });
+
+        // 4. 将拼接好的 HTML 一次性渲染到容器中
         listContainer.innerHTML = html;
-        listContainer.scrollTop = lastScrollPos; // 恢复位置
     }
 
     // ... 其余 editPost, deletePost, resetForm 逻辑保持不变 ...
