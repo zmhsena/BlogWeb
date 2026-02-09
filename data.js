@@ -7,13 +7,6 @@ window.blogPosts = [
     "category": "测试"
   },
   {
-    "title": "Test",
-    "date": "2026-02-09",
-    "excerpt": "TestContent...",
-    "fullContent": "TestContent",
-    "category": "TestArea"
-  },
-  {
     "title": "我的第一篇博客文章",
     "date": "2026-02-09",
     "excerpt": "今天终于开始搭建自己的博客了...",
