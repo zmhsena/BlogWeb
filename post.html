@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <title>文章详情</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 </head>
 <body>
 <header>
@@ -23,21 +26,49 @@
 
 <script src="data.js"></script>
 <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const postId = urlParams.get('id');
+    function renderPostDetail() {
+        // 1. 获取 URL 中的文章 ID (例如 post.html?id=0)
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id');
 
-    // 使用 window.blogPosts 获取数据
-    const post = window.blogPosts[postId];
+        // 2. 检查数据是否存在
+        if (id === null || !window.blogPosts || !window.blogPosts[id]) {
+            document.getElementById('detail-title').innerText = "文章未找到";
+            return;
+        }
 
-    if (post) {
+        const post = window.blogPosts[id];
+
+        // 3. 填充标题和元数据
         document.getElementById('detail-title').innerText = post.title;
         document.getElementById('detail-meta').innerText = `${post.date} | ${post.category}`;
-        document.getElementById('detail-content').innerText = post.fullContent;
-        document.title = post.title;
-    } else {
-        document.getElementById('detail-title').innerText = "404";
-        document.getElementById('detail-content').innerText = "抱歉，未找到该文章。";
+
+        // 4. 配置 marked 渲染器
+        // 注意：新版 marked 的语法稍有不同，建议使用以下配置
+        const renderer = new marked.Renderer();
+
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true,
+            gfm: true
+        });
+
+        // 5. 将 Markdown 内容渲染为 HTML
+        const contentArea = document.getElementById('detail-content');
+        contentArea.style.whiteSpace = "normal"; // 渲染 Markdown 后不需要预换行，交给 CSS 处理
+        contentArea.innerHTML = marked.parse(post.fullContent);
+
+        // 6. 触发代码高亮
+        hljs.highlightAll();
     }
+
+    // 确保在数据加载后执行
+    window.onload = renderPostDetail;
 </script>
 </body>
 </html>

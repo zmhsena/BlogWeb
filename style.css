@@ -37,3 +37,55 @@ nav a { color: white; text-decoration: none; font-weight: bold; }
 @media (max-width: 768px) {
     .container { grid-template-columns: 1fr; }
 }
+/* 代码块容器 */
+pre {
+    background-color: #282c34; /* 匹配 Atom One Dark 背景色 */
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto; /* 超长代码显示滚动条 */
+    margin: 20px 0;
+    line-height: 1.5;
+}
+
+/* 行内代码样式 (用反引号包裹的小代码) */
+code {
+    font-family: 'Consolas', 'Monaco', monospace;
+    background-color: #f0f0f0;
+    color: #e74c3c;
+    padding: 2px 5px;
+    border-radius: 4px;
+}
+
+/* 块级代码中的 code 标签恢复颜色 */
+pre code {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+}
+/* 文章内容排版优化 */
+#detail-content {
+    line-height: 1.8;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+/* 专门针对 Markdown 中的代码块 */
+#detail-content pre {
+    background-color: #282c34; /* Atom One Dark 的背景色 */
+    padding: 1.2rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+}
+
+#detail-content code {
+    font-family: 'Consolas', 'Courier New', monospace;
+}
+
+/* 行内代码样式（比如 `var a = 1`） */
+#detail-content :not(pre) > code {
+    background-color: #f3f3f3;
+    color: #e74c3c;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
