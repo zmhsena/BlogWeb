@@ -88,3 +88,34 @@ code { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9em; }
     background-color: #95a5a6; /* 灰色表示禁用 */
     cursor: not-allowed;
 }
+/* 标题链接样式 */
+.post-title a {
+    text-decoration: none;
+    color: #2c3e50;
+    transition: color 0.3s;
+}
+
+.post-title a:hover {
+    color: #3498db; /* 悬停时变蓝 */
+}
+
+/* 预览内容点击区域 */
+.post-excerpt {
+    cursor: pointer;
+    color: #555;
+    transition: opacity 0.3s;
+}
+
+.post-excerpt:hover {
+    opacity: 0.8; /* 悬停时稍微变淡，提示可点击 */
+}
+
+/* 如果你希望整个卡片都能点击，也可以这样设置 */
+.post-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.post-card:hover {
+    transform: translateY(-3px); /* 悬停时微浮起 */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
