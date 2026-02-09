@@ -36,32 +36,7 @@
     </aside>
 </main>
 
-<script>
-    // 1. 定义数据加载函数
-    function bootstrapBlog() {
-        const dataScript = document.createElement('script');
-        // 添加时间戳，彻底干掉缓存
-        dataScript.src = 'data.js?v=' + Date.now();
-
-        // 2. 关键：监听 data.js 加载完成事件
-        dataScript.onload = function() {
-            console.log("数据同步完成，正在启动渲染...");
-
-            // 3. 数据到位后，再动态加载主逻辑 script.js
-            const mainScript = document.createElement('script');
-            mainScript.src = 'script.js';
-            document.body.appendChild(mainScript);
-        };
-
-        dataScript.onerror = function() {
-            document.getElementById('post-list').innerHTML = "<p>数据文件加载失败，请检查 data.js 是否存在。</p>";
-        };
-
-        document.head.appendChild(dataScript);
-    }
-
-    // 执行启动逻辑
-    bootstrapBlog();
-</script>
+<script src="data.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
