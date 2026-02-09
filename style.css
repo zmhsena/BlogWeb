@@ -81,3 +81,10 @@ code { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9em; }
     .edit-section { position: static; }
     .scroll-window { height: 300px; }
 }
+#submit-btn {
+    transition: all 0.3s;
+}
+#submit-btn:disabled {
+    background-color: #95a5a6; /* 灰色表示禁用 */
+    cursor: not-allowed;
+}

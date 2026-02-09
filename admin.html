@@ -116,50 +116,64 @@
     }
 
     async function savePost() {
-        const token = document.getElementById('token-input').value;
-        if (!token) return alert("请先输入 GitHub Token");
-
-        const index = parseInt(document.getElementById('edit-index').value);
-        const title = document.getElementById('post-title').value;
-        const content = document.getElementById('post-content').value;
-        const category = document.getElementById('post-category').value;
-
-        if(!title || !content) return alert("标题和内容不能为空");
-
-        const newPost = {
-            title,
-            date: new Date().toISOString().split('T')[0],
-            excerpt: content.substring(0, 60).replace(/\n/g, "") + "...",
-            fullContent: content,
-            category: category || "未分类"
-        };
-
         const btn = document.getElementById('submit-btn');
-        btn.disabled = true;
+        const token = document.getElementById('token-input').value;
+
+        if (!token) return alert("请输入 Token");
+
+        // 1. 变成“同步中”状态并禁用，防止重复点击
+        const originalText = btn.innerText;
         btn.innerText = "同步中...";
+        btn.disabled = true;
 
-        if (index === -1) {
-            window.blogPosts.unshift(newPost);
-        } else {
-            window.blogPosts[index] = newPost;
+        try {
+            const title = document.getElementById('post-title').value;
+            const category = document.getElementById('post-category').value;
+            const content = document.getElementById('post-content').value;
+
+            if (!title || !content) {
+                alert("标题和内容不能为空");
+                // 注意：这里也要恢复按钮，否则点完警告就点不了发布了
+                btn.innerText = originalText;
+                btn.disabled = false;
+                return;
+            }
+
+            const newPost = {
+                title,
+                category: category || "未分类",
+                date: new Date().toLocaleDateString(),
+                excerpt: content.substring(0, 100) + "...",
+                fullContent: content
+            };
+
+            // 这里的 window.blogPosts 应该是你 data.js 加载进来的数组
+            const updatedPosts = [newPost, ...window.blogPosts];
+
+            // 2. 调用同步函数
+            const success = await syncToGitHub(updatedPosts, token);
+
+            if (success) {
+                alert("上传成功！");
+                // 清空输入框以便连续上传
+                document.getElementById('post-title').value = "";
+                document.getElementById('post-content').value = "";
+
+                // 更新本地内存中的数据，这样下次删除或再增加就不需要刷新页面
+                window.blogPosts = updatedPosts;
+                renderAdminList();
+            } else {
+                alert("上传失败，请检查网络或 Token 权限");
+            }
+
+        } catch (error) {
+            console.error("保存出错:", error);
+            alert("发生错误: " + error.message);
+        } finally {
+            // 3. 【关键】无论 try 块成功还是 catch 块报错，最终都会执行这里
+            btn.innerText = originalText;
+            btn.disabled = false;
         }
-
-        const fileContent = `window.blogPosts = ${JSON.stringify(window.blogPosts, null, 2)};`;
-
-        // 注意：这里需要修改 githubService.js 接受 token 参数
-        const success = await updateGitHubData(fileContent, token);
-
-        if (success) {
-            document.getElementById('status').innerText = "✅ 同步成功！GitHub 正在部署，请几分钟后刷新。";
-            resetForm();
-            renderAdminList();
-        } else {
-            alert("同步失败！请检查 Token 是否正确或具有仓库写权限。");
-            // 失败时回滚本地修改，避免数据状态不同步
-            location.reload();
-        }
-        btn.disabled = false;
-        btn.innerText = "🚀 发布并同步到 GitHub";
     }
 
     // 同步数据到 GitHub 的核心函数
