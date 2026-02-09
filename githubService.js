@@ -5,13 +5,15 @@ const GITHUB_CONFIG = {
     branch: "master"
 };
 
-async function updateGitHubData(newContent, token) { // 接收 token 参数
+async function updateGitHubData(newContent, token) {
     const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
 
     try {
-        const getRes = await fetch(`${url}?ref=${GITHUB_CONFIG.branch}`, {
+        // 【关键修复】添加 t=Date.now() 确保拿到最新的 SHA 值，否则删除操作会因为 SHA 不匹配被 GitHub 拒绝
+        const getRes = await fetch(`${url}?ref=${GITHUB_CONFIG.branch}&t=${Date.now()}`, {
             headers: { "Authorization": `token ${token}` }
         });
+
         const fileData = await getRes.json();
         const sha = fileData.sha;
 
@@ -22,7 +24,7 @@ async function updateGitHubData(newContent, token) { // 接收 token 参数
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                message: `Admin update: ${new Date().toLocaleString()}`,
+                message: `Admin Delete/Update: ${new Date().toLocaleString()}`,
                 content: btoa(unescape(encodeURIComponent(newContent))),
                 sha: sha,
                 branch: GITHUB_CONFIG.branch
@@ -31,7 +33,7 @@ async function updateGitHubData(newContent, token) { // 接收 token 参数
 
         return putRes.ok;
     } catch (err) {
-        console.error(err);
+        console.error("API 错误:", err);
         return false;
     }
 }

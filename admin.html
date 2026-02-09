@@ -151,11 +151,31 @@
 
     async function deletePost(index) {
         const token = document.getElementById('token-input').value;
-        if (!token) return alert("请先输入 Token");
+        if (!token) return alert("请先输入 Token 才能执行删除操作");
 
-        if (confirm("确定要删除这篇文章吗？此操作不可逆。")) {
+        // 1. 弹出确认框，防止误删
+        if (confirm(`确定要删除《${window.blogPosts[index].title}》吗？此操作不可逆。`)) {
+
+            // 2. 从本地数组中移除该文章
             window.blogPosts.splice(index, 1);
-            await savePost();
+
+            // 3. 构建新的文件字符串
+            const fileContent = `window.blogPosts = ${JSON.stringify(window.blogPosts, null, 2)};`;
+
+            // 4. 调用同步函数推送到 GitHub
+            const btn = document.querySelector('.delete'); // 只是为了视觉反馈
+            console.log("正在从 GitHub 删除数据...");
+
+            const success = await updateGitHubData(fileContent, token);
+
+            if (success) {
+                alert("删除成功！");
+                renderAdminList(); // 重新渲染管理列表
+            } else {
+                alert("同步失败，请检查 Token 权限。");
+                // 建议刷新页面以同步回原始数据
+                location.reload();
+            }
         }
     }
 
