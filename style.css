@@ -11,6 +11,17 @@ nav a { color: white; text-decoration: none; font-weight: bold; }
 
 /* 布局 */
 .container { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+.admin-link {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 5px 12px;
+    border-radius: 4px;
+    transition: background 0.3s;
+}
+
+.admin-link:hover {
+    background: #3498db;
+    color: white !important;
+}
 
 /* 文章卡片 */
 .post-card { background: white; padding: 25px; margin-bottom: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
