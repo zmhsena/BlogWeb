@@ -5,12 +5,5 @@ window.blogPosts = [
     "excerpt": "测试内容...",
     "fullContent": "测试内容",
     "category": "测试"
-  },
-  {
-    "title": "学习 CSS Grid 布局",
-    "date": "2026-02-08",
-    "excerpt": "Grid 布局是前端开发中非常强大的工具...",
-    "fullContent": "这是关于 CSS Grid 的详细教程。Grid 允许你创建复杂的网格布局，它是目前最先进的布局方案之一。",
-    "category": "技术"
   }
 ];
