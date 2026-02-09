@@ -83,3 +83,58 @@ pre code {
     padding: 2px 4px;
     border-radius: 4px;
 }
+/* 滑动窗口容器 */
+.scroll-window {
+    height: 500px; /* 你可以根据需要调整高度 */
+    overflow-y: auto; /* 内容超出时显示垂直滚动条 */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+    padding: 10px;
+
+    /* 隐藏水平滚动条（如果不需要） */
+    overflow-x: hidden;
+}
+
+/* 自定义滚动条样式（让它看起来更精致） */
+.scroll-window::-webkit-scrollbar {
+    width: 6px;
+}
+.scroll-window::-webkit-scrollbar-thumb {
+    background-color: #cbd5e0;
+    border-radius: 10px;
+}
+.scroll-window::-webkit-scrollbar-track {
+    background: #f7fafc;
+}
+
+/* 列表单条记录的样式优化 */
+.admin-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #edf2f7;
+    transition: background 0.2s;
+}
+.admin-item:hover {
+    background: #f8fafc;
+}
+.admin-main {
+    display: flex;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 20px auto;
+}
+
+.list-section {
+    flex: 1; /* 列表占 1 份宽度 */
+    min-width: 300px;
+}
+
+.edit-section {
+    flex: 2; /* 编辑器占 2 份宽度 */
+    position: sticky; /* 关键：向下滚动时编辑器固定在顶部 */
+    top: 80px;
+    height: fit-content;
+}

@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>管理后台 - MyNotes</title>
+    <title>管理后台 - Sena's blog</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .admin-container { max-width: 800px; margin: 20px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); }
@@ -36,7 +36,17 @@
         <p style="font-size: 0.8rem; color: #718096; margin-top: 5px;">Token 仅保存在您的浏览器本地，不会上传至代码库。</p>
     </div>
 
-    <div id="admin-post-list"></div>
+<!--    <div id="admin-post-list"></div>-->
+    <div class="admin-main">
+        <div class="list-section">
+            <h3>已有文章列表</h3>
+            <div id="admin-post-list" class="scroll-window">
+            </div>
+        </div>
+
+        <div class="edit-section">
+        </div>
+    </div>
 
     <div class="edit-area">
         <h3 id="form-title">撰写新文章</h3>
@@ -78,6 +88,7 @@
 
     function renderAdminList() {
         const listContainer = document.getElementById('admin-post-list');
+        const lastScrollPos = listContainer.scrollTop; // 记录位置
         listContainer.innerHTML = window.blogPosts.map((post, index) => `
                 <div class="post-item">
                     <span><strong>${post.title}</strong> <small style="color: #666">(${post.date})</small></span>
@@ -87,6 +98,8 @@
                     </div>
                 </div>
             `).join('');
+        listContainer.innerHTML = html;
+        listContainer.scrollTop = lastScrollPos; // 恢复位置
     }
 
     // ... 其余 editPost, deletePost, resetForm 逻辑保持不变 ...
