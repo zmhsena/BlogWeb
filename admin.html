@@ -178,10 +178,10 @@
 
     // 同步数据到 GitHub 的核心函数
     async function syncToGitHub(updatedPosts, token) {
-        const url = `https://api.github.com/repos/${CONFIG.repo}/contents/${CONFIG.path}`;
+        const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
 
         // 1. 获取最新 SHA，带上时间戳防止读取缓存 SHA 导致冲突
-        const getRes = await fetch(`${url}?ref=${CONFIG.branch}&t=${Date.now()}`, {
+        const getRes = await fetch(`${url}?ref=${GITHUB_CONFIG.branch}&t=${Date.now()}`, {
             headers: { "Authorization": `token ${token}` }
         });
         const fileData = await getRes.json();
@@ -200,7 +200,7 @@
                 message: `Admin update: ${new Date().toLocaleString()}`,
                 content: btoa(unescape(encodeURIComponent(newFileContent))), // 完美支持中文
                 sha: fileData.sha,
-                branch: CONFIG.branch
+                branch: GITHUB_CONFIG.branch
             })
         });
 
