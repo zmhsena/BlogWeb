@@ -1,10 +1,10 @@
 window.blogPosts = [
   {
-    "title": "qwdas",
+    "title": "Test",
     "date": "2026-02-09",
-    "excerpt": "scxsxc...",
-    "fullContent": "scxsxc",
-    "category": "adasd"
+    "excerpt": "TestContent...",
+    "fullContent": "TestContent",
+    "category": "TestArea"
   },
   {
     "title": "我的第一篇博客文章",
