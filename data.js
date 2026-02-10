@@ -1,12 +1,5 @@
 window.blogPosts = [
   {
-    "title": "阿斯顿擦擦",
-    "date": "2026-02-10",
-    "excerpt": "![屏幕截图 2026-02-10 192241.png](images/屏幕截图 2026-02-10 192241.png)...",
-    "fullContent": "![屏幕截图 2026-02-10 192241.png](images/屏幕截图 2026-02-10 192241.png)",
-    "category": "asdasd啊实打实"
-  },
-  {
     "title": "qwd",
     "date": "2026-02-10",
     "excerpt": "阿斯顿![screenshot_2025-12-23_17-32-08.png](images/img_1770693312679_screenshot_2025-12-23_17-32-08.pn...",
