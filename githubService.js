@@ -2,7 +2,7 @@
 const GITHUB_CONFIG = {
     repo: "zmhsena/BlogWeb",
     path: "data.js",
-    branch: "master"
+    branch: "editPanel_feature"
 };
 
 async function updateGitHubData(newContent, token) {
