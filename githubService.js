@@ -1,7 +1,7 @@
 const GITHUB_CONFIG = {
     repo: "你的用户名/仓库名",
     path: "data.js",
-    branch: "main"
+    branch: "master"
 };
 
 async function githubAPI(method, body = null, token) {
