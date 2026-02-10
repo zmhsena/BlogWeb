@@ -150,3 +150,66 @@ code { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9em; }
     border-top-left-radius: 0;
     border-top-right-radius: 0;
 }
+/* 双栏布局 */
+.editor-container {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.editor-input, .editor-preview {
+    flex: 1;
+    min-width: 0; /* 防止溢出 */
+}
+
+/* 预览区样式 */
+.editor-preview {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+    padding: 15px;
+    height: 500px; /* 与 textarea 匹配 */
+    overflow-y: auto;
+}
+
+.preview-label {
+    font-size: 0.8rem;
+    color: #999;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+}
+
+/* 颜色下拉菜单样式 */
+.color-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.color-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid #ddd;
+    padding: 5px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    z-index: 10;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.color-dropdown:hover .color-menu {
+    display: grid;
+}
+
+.color-option {
+    width: 25px;
+    height: 25px;
+    border-radius: 3px;
+    cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.color-option:hover { transform: scale(1.1); }

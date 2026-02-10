@@ -51,28 +51,43 @@
     <div class="edit-area">
         <h3 id="form-title">撰写新文章</h3>
         <input type="hidden" id="edit-index" value="-1">
-        <input type="text" id="post-title" placeholder="文章标题">
-        <input type="text" id="post-category" placeholder="分类 (如: 技术, 生活)">
-        <div class="edit-area">
-            <h3 id="form-title">撰写新文章</h3>
-            <input type="hidden" id="edit-index" value="-1">
 
-            <div class="toolbar">
-                <button type="button" onclick="insertFormat('bold')" title="加粗"><b>B</b></button>
-                <button type="button" onclick="insertFormat('italic')" title="斜体"><i>I</i></button>
-                <button type="button" onclick="insertFormat('color')" title="变色">🎨 颜色</button>
-                <button type="button" onclick="insertFormat('highlight')" title="强调">✨ 强调</button>
-                <button type="button" onclick="insertFormat('image')" title="插入图片">🖼 插入图片</button>
+        <div class="toolbar">
+            <button type="button" onclick="insertFormat('bold')"><b>B</b></button>
+            <button type="button" onclick="insertFormat('italic')"><i>I</i></button>
+
+            <div class="color-dropdown">
+                <button type="button">🎨 颜色 ▼</button>
+                <div class="color-menu">
+                    <div class="color-option" style="background: #e74c3c" onclick="insertFormat('color', '#e74c3c')"></div>
+                    <div class="color-option" style="background: #3498db" onclick="insertFormat('color', '#3498db')"></div>
+                    <div class="color-option" style="background: #2ecc71" onclick="insertFormat('color', '#2ecc71')"></div>
+                    <div class="color-option" style="background: #f1c40f" onclick="insertFormat('color', '#f1c40f')"></div>
+                    <div class="color-option" style="background: #9b59b6" onclick="insertFormat('color', '#9b59b6')"></div>
+                </div>
             </div>
 
-            <input type="text" id="post-title" placeholder="文章标题">
-            <input type="text" id="post-category" placeholder="分类">
-            <textarea id="post-content" rows="12" placeholder="内容支持 Markdown 格式..."></textarea>
+            <button type="button" onclick="insertFormat('highlight')">✨ 强调</button>
+            <button type="button" onclick="insertFormat('image')">🖼 图片</button>
         </div>
+
+        <div class="editor-container">
+            <div class="editor-input">
+                <input type="text" id="post-title" placeholder="文章标题" oninput="updatePreview()">
+                <input type="text" id="post-category" placeholder="分类" oninput="updatePreview()">
+                <textarea id="post-content" rows="15" placeholder="在此输入内容..." oninput="updatePreview()"></textarea>
+            </div>
+            <div class="editor-preview">
+                <div class="preview-label">实时预览</div>
+                <div id="live-preview" class="markdown-body"></div>
+            </div>
+        </div>
+
         <button id="submit-btn" onclick="savePost()">🚀 发布并同步到 GitHub</button>
         <button onclick="resetForm()" style="background:#95a5a6">取消修改</button>
-        <div id="status" class="status-msg"></div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </div>
 
 <script src="data.js"></script>
@@ -133,7 +148,66 @@
         // 4. 将拼接好的 HTML 一次性渲染到容器中
         listContainer.innerHTML = html;
     }
+    // 在 admin.html 的 <script> 顶部添加
+    let pendingImages = []; // 用于存放待上传的图片对象 {name, base64}
 
+    // 初始化拖拽事件
+    function initDragAndDrop() {
+        const textarea = document.getElementById('post-content');
+
+        textarea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            textarea.style.borderColor = '#3498db'; // 拖入时高亮边框
+        });
+
+        textarea.addEventListener('dragleave', () => {
+            textarea.style.borderColor = '#ddd';
+        });
+
+        textarea.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            textarea.style.borderColor = '#ddd';
+
+            const files = e.dataTransfer.files;
+            for (let file of files) {
+                if (file.type.startsWith('image/')) {
+                    await processImage(file);
+                }
+            }
+        });
+    }
+
+    // 处理图片文件
+    async function processImage(file) {
+        const textarea = document.getElementById('post-content');
+        const fileName = `img_${Date.now()}_${file.name}`; // 加上时间戳防止重名
+        const reader = new FileReader();
+
+        reader.onload = async (e) => {
+            const base64Content = e.target.result.split(',')[1]; // 获取纯 base64 部分
+
+            // 1. 记录到待上传列表
+            pendingImages.push({
+                name: fileName,
+                content: base64Content
+            });
+
+            // 2. 在编辑框插入 Markdown 语法
+            // 注意：这里先用 Base64 渲染以实现“即时预览”，保存时会被替换为正式路径
+            const imgMarkdown = `![${file.name}](data:image/png;base64,${base64Content})\n`;
+            const start = textarea.selectionStart;
+            textarea.value = textarea.value.substring(0, start) + imgMarkdown + textarea.value.substring(textarea.selectionEnd);
+
+            updatePreview(); // 触发之前定义的实时预览函数
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // 页面加载完成后初始化
+    window.onload = () => {
+        // ... 原有的 onload 逻辑 ...
+        initDragAndDrop();
+    };
     // ... 其余 editPost, deletePost, resetForm 逻辑保持不变 ...
     // (省略部分与之前相同以保持简洁)
 
@@ -146,104 +220,111 @@
         document.getElementById('form-title').innerText = "编辑文章";
         window.scrollTo(0, document.body.scrollHeight);
     }
-    function insertFormat(type) {
+    // 实时更新预览
+    function updatePreview() {
+        const content = document.getElementById('post-content').value;
+        const previewArea = document.getElementById('live-preview');
+
+        // 使用与详情页一致的配置渲染
+        marked.setOptions({ breaks: true, gfm: true });
+        previewArea.innerHTML = marked.parse(content || "*等待输入内容...*");
+    }
+
+    // 优化的格式插入函数
+    function insertFormat(type, colorValue = null) {
         const textarea = document.getElementById('post-content');
-        const start = textarea.selectionStart; // 选中部分的起始位置
-        const end = textarea.selectionEnd;     // 选中部分的结束位置
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
         const selectedText = textarea.value.substring(start, end);
         let newText = "";
 
         switch (type) {
-            case 'bold':
-                newText = `**${selectedText || "粗体文字"}**`;
-                break;
-            case 'italic':
-                newText = `*${selectedText || "斜体文字"}*`;
-                break;
+            case 'bold': newText = `**${selectedText || "粗体"}**`; break;
+            case 'italic': newText = `*${selectedText || "斜体"}*`; break;
             case 'color':
-                const color = prompt("请输入颜色值 (例如: red, #3498db):", "red");
-                if (!color) return;
-                newText = `<span style="color:${color}">${selectedText || "彩色文字"}</span>`;
+                newText = `<span style="color:${colorValue}">${selectedText || "彩色文字"}</span>`;
                 break;
-            case 'highlight':
-                // Markdown 中没有专门的强调标签，通常映射为 <mark>
-                newText = `<mark>${selectedText || "强调文字"}</mark>`;
-                break;
+            case 'highlight': newText = `<mark>${selectedText || "强调"}</mark>`; break;
             case 'image':
-                const imgUrl = prompt("请输入图片链接:", "https://");
-                if (!imgUrl) return;
-                newText = `![描述](${imgUrl})`;
+                const url = prompt("图片链接:");
+                if(url) newText = `![描述](${url})`;
                 break;
         }
 
-        // 将新内容插入原位置
         const content = textarea.value;
         textarea.value = content.substring(0, start) + newText + content.substring(end);
 
-        // 重新聚焦并调整光标位置
+        // 插入后立即更新预览
+        updatePreview();
+
         textarea.focus();
         textarea.setSelectionRange(start + newText.length, start + newText.length);
     }
 
+    // 页面加载后初始化一下预览
+    window.addEventListener('DOMContentLoaded', updatePreview);
+
+    // 修改 admin.html 中的 savePost 函数
     async function savePost() {
-        const btn = document.getElementById('submit-btn');
-        const token = document.getElementById('token-input').value;
+        // ... 前置校验逻辑 ...
 
-        if (!token) return alert("请输入 Token");
-
-        // 1. 变成“同步中”状态并禁用，防止重复点击
-        const originalText = btn.innerText;
-        btn.innerText = "同步中...";
-        btn.disabled = true;
+        btn.innerText = "上传图片中...";
 
         try {
-            const title = document.getElementById('post-title').value;
-            const category = document.getElementById('post-category').value;
-            const content = document.getElementById('post-content').value;
+            let content = document.getElementById('post-content').value;
 
-            if (!title || !content) {
-                alert("标题和内容不能为空");
-                // 注意：这里也要恢复按钮，否则点完警告就点不了发布了
-                btn.innerText = originalText;
-                btn.disabled = false;
-                return;
+            // 1. 先上传所有图片
+            for (let img of pendingImages) {
+                const imgPath = `images/${img.name}`;
+                const success = await uploadFileToGitHub(imgPath, img.content, token);
+                if (success) {
+                    // 上传成功后，将正文里的 Base64 替换为真实的 GitHub 图片路径
+                    // 这样 post.html 访问时就是引用 GitHub 上的图片了
+                    const base64Pattern = `data:image/png;base64,${img.content}`;
+                    content = content.replace(base64Pattern, imgPath);
+                }
             }
 
+            // 2. 准备最终的文章数据
             const newPost = {
-                title,
-                category: category || "未分类",
-                date: new Date().toLocaleDateString(),
-                excerpt: content.substring(0, 100) + "...",
-                fullContent: content
+                title: document.getElementById('post-title').value,
+                // ... 其他字段 ...
+                fullContent: content // 使用替换路径后的内容
             };
 
-            // 这里的 window.blogPosts 应该是你 data.js 加载进来的数组
+            // 3. 同步 data.js
             const updatedPosts = [newPost, ...window.blogPosts];
+            const syncSuccess = await syncToGitHub(updatedPosts, token);
 
-            // 2. 调用同步函数
-            const success = await syncToGitHub(updatedPosts, token);
-
-            if (success) {
-                alert("上传成功！");
-                // 清空输入框以便连续上传
-                document.getElementById('post-title').value = "";
-                document.getElementById('post-content').value = "";
-
-                // 更新本地内存中的数据，这样下次删除或再增加就不需要刷新页面
-                window.blogPosts = updatedPosts;
+            if (syncSuccess) {
+                alert("全部同步成功！");
+                pendingImages = []; // 清空缓存
                 renderAdminList();
-            } else {
-                alert("上传失败，请检查网络或 Token 权限");
             }
-
         } catch (error) {
-            console.error("保存出错:", error);
-            alert("发生错误: " + error.message);
+            console.error(error);
         } finally {
-            // 3. 【关键】无论 try 块成功还是 catch 块报错，最终都会执行这里
-            btn.innerText = originalText;
+            btn.innerText = "🚀 发布并同步到 GitHub";
             btn.disabled = false;
         }
+    }
+
+    // 通用的单文件上传函数
+    async function uploadFileToGitHub(path, base64Content, token) {
+        const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${path}`;
+        const res = await fetch(url, {
+            method: "PUT",
+            headers: {
+                "Authorization": `token ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                message: `Upload image: ${path}`,
+                content: base64Content,
+                branch: GITHUB_CONFIG.branch
+            })
+        });
+        return res.ok;
     }
 
     // 同步数据到 GitHub 的核心函数
