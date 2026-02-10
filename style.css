@@ -213,3 +213,20 @@ code { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9em; }
 }
 
 .color-option:hover { transform: scale(1.1); }
+.post-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* 顶部对齐，适合多行标题 */
+    padding: 12px;
+    gap: 20px;
+}
+
+.post-item > span {
+    word-break: break-all; /* 允许在单词内换行 */
+    line-height: 1.4;
+}
+
+.post-item div {
+    flex-shrink: 0; /* 必须保留，确保按钮永远不会变窄 */
+    margin-top: -2px; /* 微调按钮高度使其与首行标题对齐 */
+}
