@@ -90,7 +90,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </div>
 
-<script src="data.js"></script>
+<!--<script src="data.js"></script>-->
 <script src="githubService.js"></script>
 <script>
     // 页面加载时自动读取本地保存的 Token
@@ -101,6 +101,7 @@
         console.log("正在获取云端最新数据...");
         await fetchLatestDataFromCloud();
         renderAdminPosts(); // 数据拿到后再渲染列表
+        initDragAndDrop()
     };
 
     async function fetchLatestDataFromCloud() {
@@ -219,32 +220,52 @@
 
     // 处理图片文件
     // admin.html 中的 processImage 函数
+    // 修改 admin.html 中的图片处理逻辑
     async function processImage(file) {
         const textarea = document.getElementById('post-content');
-        const fileName = `img_${Date.now()}_${file.name}`; // 生成唯一文件名
-        const reader = new FileReader();
+        const token = document.getElementById('token-input').value;
+        // 在 admin.html 的 processImage 函数里
+        const originalName = file.name;
+// 将空格替换为下划线，移除特殊字符
+        const fileName = originalName.replace(/\s+/g, '_').replace(/[()（）]/g, '');
 
-        reader.onload = async (e) => {
-            const base64Content = e.target.result.split(',')[1];
+// 之后再使用这个 safeName 进行上传和 Markdown 插入
+        const path = `images/${fileName}`;
 
-            // 1. 将数据存入内存，供稍后上传和预览使用
-            pendingImages.push({
-                name: fileName,
-                content: base64Content,
-                localUrl: e.target.result // 保留完整的 data:image 格式用于预览
+        // 1. 检查 GitHub 远程是否已存在同名图片
+        const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${path}?ref=${GITHUB_CONFIG.branch}`;
+
+        try {
+            const checkRes = await fetch(url, {
+                headers: { "Authorization": `token ${token}` }
             });
 
-            // 2. 仅在编辑框插入简洁的 Markdown 引用，不再有长串乱码
-            const imgMarkdown = `![${file.name}](images/${fileName})`;
-            const start = textarea.selectionStart;
-            const end = textarea.selectionEnd;
+            if (checkRes.ok) {
+                // 图片已存在，直接插入 Markdown，跳过上传步骤
+                console.log("图片已存在，直接引用:", fileName);
+                insertImageMarkdown(textarea, fileName);
+                return;
+            }
+        } catch (e) { /* 忽略错误，继续上传流程 */ }
 
-            textarea.value = textarea.value.substring(0, start) + imgMarkdown + textarea.value.substring(end);
-
-            // 3. 更新预览
-            updatePreview();
+        // 2. 图片不存在，读取并加入待上传队列
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            pendingImages.push({
+                name: fileName,
+                content: e.target.result.split(',')[1],
+                localUrl: e.target.result
+            });
+            insertImageMarkdown(textarea, fileName);
         };
         reader.readAsDataURL(file);
+    }
+
+    function insertImageMarkdown(textarea, fileName) {
+        const imgMarkdown = `![${fileName}](images/${fileName})`;
+        const start = textarea.selectionStart;
+        textarea.value = textarea.value.substring(0, start) + imgMarkdown + textarea.value.substring(textarea.selectionEnd);
+        updatePreview();
     }
     
     // ... 其余 editPost, deletePost, resetForm 逻辑保持不变 ...
@@ -417,22 +438,75 @@
     }
 
     // 删除文章函数
+    // 修改 admin.html 中的删除函数
     async function deletePost(index) {
         const token = document.getElementById('token-input').value;
         if(!token) return alert("请输入 Token");
 
-        if(confirm("确定删除这篇文章吗？")) {
-            const posts = [...window.blogPosts];
-            posts.splice(index, 1);
+        if(!confirm("确定删除这篇文章吗？清理未使用的图片可能需要一点时间。")) return;
 
-            const success = await syncToGitHub(posts, token);
-            if(success) {
-                alert("删除并同步成功！页面将刷新。");
-                location.reload();
-            } else {
-                alert("同步失败，请检查权限。");
-            }
+        const allPosts = window.blogPosts;
+        const targetPost = allPosts[index];
+        const otherPosts = allPosts.filter((_, i) => i !== index);
+
+        // 1. 提取目标文章中引用的所有图片名
+        const targetImages = extractImageNames(targetPost.fullContent);
+
+        // 2. 提取所有其他文章引用的图片名集合
+        const otherImagesSet = new Set();
+        otherPosts.forEach(p => {
+            extractImageNames(p.fullContent).forEach(img => otherImagesSet.add(img));
+        });
+
+        // 3. 找出“孤立”图片：只在目标文章中出现，没在其他文章出现的
+        const imagesToDelete = targetImages.filter(img => !otherImagesSet.has(img));
+
+        // 4. 执行删除图片操作
+        for (const imgName of imagesToDelete) {
+            await deleteFileFromGitHub(`images/${imgName}`, token);
         }
+
+        // 5. 更新 data.js
+        const newPosts = [...otherPosts];
+        const success = await syncToGitHub(newPosts, token);
+
+        if(success) {
+            alert("文章及冗余图片已清理成功！");
+            location.reload();
+        }
+    }
+
+    // 辅助工具：从 Markdown 文本中正则匹配 images/xxx.png
+    function extractImageNames(content) {
+        const regex = /images\/([^\)\s]+)/g;
+        const names = [];
+        let match;
+        while ((match = regex.exec(content)) !== null) {
+            names.push(match[1]);
+        }
+        return names;
+    }
+
+    // 辅助工具：调用 GitHub API 删除文件
+    async function deleteFileFromGitHub(path, token) {
+        const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${path}?ref=${GITHUB_CONFIG.branch}`;
+
+        try {
+            const getRes = await fetch(url, { headers: { "Authorization": `token ${token}` } });
+            if (!getRes.ok) return;
+            const fileData = await getRes.json();
+
+            await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${path}`, {
+                method: "DELETE",
+                headers: { "Authorization": `token ${token}`, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    message: `Delete orphan image: ${path}`,
+                    sha: fileData.sha,
+                    branch: GITHUB_CONFIG.branch
+                })
+            });
+            console.log("已清理孤立图片:", path);
+        } catch (e) { console.error("删除图片失败:", path, e); }
     }
 
     function resetForm() {

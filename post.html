@@ -80,7 +80,6 @@
         // 将相对路径 images/ 替换为当前开发分支的远程绝对路径
         content = content.split('images/').join(rawBaseUrl + 'images/');
 
-        // 渲染 Markdown
         document.getElementById('detail-content').innerHTML = marked.parse(content);
 
         // 代码高亮
