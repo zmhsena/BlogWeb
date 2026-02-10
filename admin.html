@@ -53,6 +53,7 @@
         <input type="hidden" id="edit-index" value="-1">
 
         <div class="toolbar">
+            <button onclick="insertBigText()">H</button>
             <button type="button" onclick="insertFormat('bold')"><b>B</b></button>
             <button type="button" onclick="insertFormat('italic')"><i>I</i></button>
 
@@ -150,7 +151,26 @@
             alert('Token 已加密保存至本地浏览器存储');
         }
     }
+    function insertBigText() {
+        const textarea = document.getElementById('post-content');
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = textarea.value.substring(start, end);
 
+        if (selectedText === "") {
+            alert("请先选中一段文字再点击增大字号");
+            return;
+        }
+
+        // 使用 span 标签包裹，设置字号和加粗
+        // 你可以根据喜好调整 24px 这个数值
+        const replacement = `<span style="font-size: 24px; font-weight: bold;">${selectedText}</span>`;
+
+        textarea.setRangeText(replacement, start, end, 'select');
+
+        // 触发预览更新
+        updatePreview();
+    }
     function clearToken() {
         localStorage.removeItem('my_gh_token');
         document.getElementById('token-input').value = '';
