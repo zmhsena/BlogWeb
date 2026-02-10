@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="githubService.js"></script>
 </head>
 <body>
 <header>
@@ -15,7 +16,7 @@
 
 <main class="container" style="display: block; max-width: 850px;">
     <article class="post-card">
-        <h1 id="detail-title">正在加载...</h1>
+        <h1 id="detail-title">正在加载最新文章...</h1>
         <div class="post-meta" id="detail-meta"></div>
         <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
         <div id="detail-content"></div>
@@ -23,31 +24,70 @@
 </main>
 
 <script>
-    // 强制刷新缓存读取数据
-    document.write('<script src="data.js?v=' + Date.now() + '"><\/script>');
-</script>
-<script>
-    window.onload = function() {
+    // 【关键修复 2】删掉了原来的 document.write 逻辑，完全改用下面的异步加载
+
+    window.onload = async function() {
         const params = new URLSearchParams(window.location.search);
         const id = params.get('id');
-        const post = window.blogPosts && window.blogPosts[id];
 
-        if (!post) {
-            document.getElementById('detail-title').innerText = "文章不存在";
+        // 1. 从远程获取最新数据
+        const branch = GITHUB_CONFIG.branch;
+        const repo = GITHUB_CONFIG.repo;
+        const apiUrl = `https://api.github.com/repos/${repo}/contents/data.js?ref=${branch}&t=${Date.now()}`;
+
+        try {
+            const res = await fetch(apiUrl);
+            if (!res.ok) throw new Error("无法连接到 GitHub 存储库");
+
+            const json = await res.json();
+            // 解码并执行数据脚本
+            const contentStr = decodeURIComponent(escape(atob(json.content)));
+            const scriptEval = document.createElement('script');
+            scriptEval.text = contentStr;
+            document.head.appendChild(scriptEval);
+
+            console.log("详情页数据同步成功");
+
+            // 2. 只有数据加载完后，才执行渲染
+            renderPostDetail(id);
+
+        } catch (e) {
+            console.error("加载失败:", e);
+            document.getElementById('detail-title').innerText = "数据同步失败，请检查网络或配置";
+        }
+    };
+
+    function renderPostDetail(id) {
+        // 检查全局变量是否已由加载的远程脚本定义
+        if (!window.blogPosts || !window.blogPosts[id]) {
+            document.getElementById('detail-title').innerText = "文章不存在 (ID: " + id + ")";
             return;
         }
 
+        const post = window.blogPosts[id];
+
+        // 设置标题和元数据
         document.title = post.title;
         document.getElementById('detail-title').innerText = post.title;
         document.getElementById('detail-meta').innerText = `${post.date} | ${post.category}`;
 
-        // 配置 Marked 并渲染
+        // 配置 Marked
         marked.setOptions({ breaks: true, gfm: true });
-        document.getElementById('detail-content').innerHTML = marked.parse(post.fullContent);
 
-        // 执行代码高亮
-        hljs.highlightAll();
-    };
+        // 处理内容中的图片路径
+        const rawBaseUrl = getRawRoot();
+        let content = post.fullContent;
+        // 将相对路径 images/ 替换为当前开发分支的远程绝对路径
+        content = content.split('images/').join(rawBaseUrl + 'images/');
+
+        // 渲染 Markdown
+        document.getElementById('detail-content').innerHTML = marked.parse(content);
+
+        // 代码高亮
+        document.querySelectorAll('pre code').forEach((el) => {
+            hljs.highlightElement(el);
+        });
+    }
 </script>
 </body>
 </html>

@@ -28,7 +28,32 @@
     </aside>
 </main>
 
-<script src="data.js"></script>
+<script src="githubService.js"></script>
 <script src="script.js"></script>
+<script>
+    // 动态加载当前分支的 data.js
+    (async function loadDataViaAPI() {
+        const branch = GITHUB_CONFIG.branch;
+        const repo = GITHUB_CONFIG.repo;
+        // 使用 API 路径
+        const apiUrl = `https://api.github.com/repos/${repo}/contents/data.js?ref=${branch}`;
+
+        try {
+            const res = await fetch(apiUrl);
+            const json = await res.json();
+            // API 返回的内容是 Base64 编码的，需要解码
+            const content = decodeURIComponent(escape(atob(json.content)));
+
+            // 执行这段内容（因为它定义了 window.blogPosts）
+            const script = document.createElement('script');
+            script.text = content;
+            document.head.appendChild(script);
+
+            renderPosts(); // 渲染
+        } catch (e) {
+            console.error("API 获取失败", e);
+        }
+    })();
+</script>
 </body>
 </html>

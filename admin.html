@@ -94,14 +94,53 @@
 <script src="githubService.js"></script>
 <script>
     // 页面加载时自动读取本地保存的 Token
-    window.onload = () => {
-        const savedToken = localStorage.getItem('my_gh_token');
-        if (savedToken) {
-            document.getElementById('token-input').value = savedToken;
-        }
-        renderAdminList();
-        initDragAndDrop();
+    // 在 admin.html 的 <script> 块开头
+
+    // 1. 初始化时先从云端拉取数据
+    window.onload = async function() {
+        console.log("正在获取云端最新数据...");
+        await fetchLatestDataFromCloud();
+        renderAdminPosts(); // 数据拿到后再渲染列表
     };
+
+    async function fetchLatestDataFromCloud() {
+        const branch = GITHUB_CONFIG.branch;
+        const repo = GITHUB_CONFIG.repo;
+        const url = `https://api.github.com/repos/${repo}/contents/data.js?ref=${branch}&t=${Date.now()}`;
+
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("无法连接 GitHub");
+            const json = await res.json();
+
+            // 解码并执行，这样 window.blogPosts 就变成了云端的最新内容
+            const contentStr = decodeURIComponent(escape(atob(json.content)));
+            const scriptEval = document.createElement('script');
+            scriptEval.text = contentStr;
+            document.head.appendChild(scriptEval);
+
+            console.log("云端数据同步完成！当前文章数:", window.blogPosts.length);
+        } catch (e) {
+            console.error("同步失败，将使用本地/空数据:", e);
+            if (!window.blogPosts) window.blogPosts = [];
+        }
+    }
+
+    // 2. 修改原有的渲染函数名（避免和 script.js 冲突或保持逻辑清晰）
+    function renderAdminPosts() {
+        const list = document.getElementById('admin-post-list');
+        if (!window.blogPosts) return;
+
+        list.innerHTML = window.blogPosts.map((post, index) => `
+        <div class="post-item">
+            <span>${post.title} (${post.date})</span>
+            <div>
+                <button onclick="editPost(${index})" style="background:#4a90e2; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">编辑</button>
+                <button onclick="deletePost(${index})" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-left:5px;">删除</button>
+            </div>
+        </div>
+    `).join('');
+    }
 
     function saveTokenToLocal() {
         const val = document.getElementById('token-input').value;
@@ -220,24 +259,27 @@
         document.getElementById('form-title').innerText = "编辑文章";
         window.scrollTo(0, document.body.scrollHeight);
     }
-    // 实时更新预览
-    // admin.html 中的 updatePreview 函数
+    // 动态生成基础 URL
+    function getRawBaseUrl() {
+        // 使用 GITHUB_CONFIG 中定义的分支名
+        const branch = GITHUB_CONFIG.branch || 'master';
+        return `https://raw.githubusercontent.com/${GITHUB_CONFIG.repo}/${branch}/`;
+    }
+
+    // 在 updatePreview 中使用
     function updatePreview() {
         let content = document.getElementById('post-content').value;
-        const previewArea = document.getElementById('live-preview');
+        const rawBaseUrl = getRawRoot();
 
-        // 关键步骤：在预览前，将内容中引用的 images/ 路径临时替换为 Base64 以便显示
+        // 先用内存中的 Base64 替换（解决刚拖入未上传的预览）
         pendingImages.forEach(img => {
-            const fakePath = `images/${img.name}`;
-            // 使用 split/join 实现全局替换
-            content = content.split(fakePath).join(img.localUrl);
+            content = content.split(`images/${img.name}`).join(img.localUrl);
         });
 
-        marked.setOptions({ breaks: true, gfm: true });
-        previewArea.innerHTML = marked.parse(content || "*等待输入内容...*");
+        // 再将其他的相对路径指向当前开发分支的远程地址
+        content = content.replace(/\(images\//g, `(${rawBaseUrl}images/`);
 
-        // 如果有代码块，顺便触发高亮
-        if (window.hljs) hljs.highlightAll();
+        document.getElementById('live-preview').innerHTML = marked.parse(content);
     }
 
     // 优化的格式插入函数

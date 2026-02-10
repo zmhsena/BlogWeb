@@ -1,9 +1,15 @@
 // githubService.js
+// githubService.js
 const GITHUB_CONFIG = {
     repo: "zmhsena/BlogWeb",
     path: "data.js",
-    branch: "editPanel_feature"
+    branch: "editPanel_feature" // 你当前的分支
 };
+
+// 新增：获取当前配置分支的原始资源根目录
+function getRawRoot() {
+    return `https://raw.githubusercontent.com/${GITHUB_CONFIG.repo}/${GITHUB_CONFIG.branch}/`;
+}
 
 async function updateGitHubData(newContent, token) {
     const url = `https://api.github.com/repos/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
