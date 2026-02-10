@@ -3,7 +3,7 @@
 const GITHUB_CONFIG = {
     repo: "zmhsena/BlogWeb",
     path: "data.js",
-    branch: "master" // 你当前的分支
+    branch: "dataBranch" //数据分支
 };
 
 // 新增：获取当前配置分支的原始资源根目录
