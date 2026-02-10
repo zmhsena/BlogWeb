@@ -53,7 +53,22 @@
         <input type="hidden" id="edit-index" value="-1">
         <input type="text" id="post-title" placeholder="文章标题">
         <input type="text" id="post-category" placeholder="分类 (如: 技术, 生活)">
-        <textarea id="post-content" rows="12" placeholder="内容支持 Markdown 格式..."></textarea>
+        <div class="edit-area">
+            <h3 id="form-title">撰写新文章</h3>
+            <input type="hidden" id="edit-index" value="-1">
+
+            <div class="toolbar">
+                <button type="button" onclick="insertFormat('bold')" title="加粗"><b>B</b></button>
+                <button type="button" onclick="insertFormat('italic')" title="斜体"><i>I</i></button>
+                <button type="button" onclick="insertFormat('color')" title="变色">🎨 颜色</button>
+                <button type="button" onclick="insertFormat('highlight')" title="强调">✨ 强调</button>
+                <button type="button" onclick="insertFormat('image')" title="插入图片">🖼 插入图片</button>
+            </div>
+
+            <input type="text" id="post-title" placeholder="文章标题">
+            <input type="text" id="post-category" placeholder="分类">
+            <textarea id="post-content" rows="12" placeholder="内容支持 Markdown 格式..."></textarea>
+        </div>
         <button id="submit-btn" onclick="savePost()">🚀 发布并同步到 GitHub</button>
         <button onclick="resetForm()" style="background:#95a5a6">取消修改</button>
         <div id="status" class="status-msg"></div>
@@ -130,6 +145,44 @@
         document.getElementById('post-content').value = post.fullContent;
         document.getElementById('form-title').innerText = "编辑文章";
         window.scrollTo(0, document.body.scrollHeight);
+    }
+    function insertFormat(type) {
+        const textarea = document.getElementById('post-content');
+        const start = textarea.selectionStart; // 选中部分的起始位置
+        const end = textarea.selectionEnd;     // 选中部分的结束位置
+        const selectedText = textarea.value.substring(start, end);
+        let newText = "";
+
+        switch (type) {
+            case 'bold':
+                newText = `**${selectedText || "粗体文字"}**`;
+                break;
+            case 'italic':
+                newText = `*${selectedText || "斜体文字"}*`;
+                break;
+            case 'color':
+                const color = prompt("请输入颜色值 (例如: red, #3498db):", "red");
+                if (!color) return;
+                newText = `<span style="color:${color}">${selectedText || "彩色文字"}</span>`;
+                break;
+            case 'highlight':
+                // Markdown 中没有专门的强调标签，通常映射为 <mark>
+                newText = `<mark>${selectedText || "强调文字"}</mark>`;
+                break;
+            case 'image':
+                const imgUrl = prompt("请输入图片链接:", "https://");
+                if (!imgUrl) return;
+                newText = `![描述](${imgUrl})`;
+                break;
+        }
+
+        // 将新内容插入原位置
+        const content = textarea.value;
+        textarea.value = content.substring(0, start) + newText + content.substring(end);
+
+        // 重新聚焦并调整光标位置
+        textarea.focus();
+        textarea.setSelectionRange(start + newText.length, start + newText.length);
     }
 
     async function savePost() {

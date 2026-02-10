@@ -119,3 +119,34 @@ code { font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9em; }
     transform: translateY(-3px); /* 悬停时微浮起 */
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
+.toolbar {
+    background: #f1f3f5;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-bottom: none;
+    border-radius: 4px 4px 0 0;
+    display: flex;
+    gap: 5px;
+}
+
+.toolbar button {
+    background: white;
+    color: #333;
+    border: 1px solid #ced4da;
+    padding: 5px 12px;
+    font-size: 0.9rem;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.toolbar button:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+/* 确保 textarea 不要和工具栏有空隙 */
+#post-content {
+    margin-top: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
