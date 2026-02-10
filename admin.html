@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>博客后台管理</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-box { background: white; padding: 20px; border-radius: 8px; max-width: 600px; margin: 20px auto; }
+        input, textarea { width: 100%; margin-bottom: 10px; padding: 8px; }
+        button { padding: 10px 20px; cursor: pointer; background: #2c3e50; color: white; border: none; }
+    </style>
+</head>
+<body>
+<div class="admin-box">
+    <h2>文章管理面板</h2>
+    <input type="password" id="token" placeholder="输入 GitHub Personal Access Token">
+    <hr>
+    <input type="text" id="title" placeholder="文章标题">
+    <textarea id="content" rows="10" placeholder="文章完整内容"></textarea>
+    <button onclick="handleSave()">保存并推送到 GitHub</button>
+    <p id="status"></p>
+</div>
+
+<script src="data.js"></script> <script src="githubService.js"></script>
+<script>
+    async function handleSave() {
+        const token = document.getElementById('token').value;
+        const title = document.getElementById('title').value;
+        const content = document.getElementById('content').value;
+        const status = document.getElementById('status');
+
+        if (!token) return alert("请输入 Token");
+
+        // 1. 增/改逻辑：更新本地 window.blogPosts 数组
+        const newPost = {
+            title: title,
+            date: new Date().toISOString().split('T')[0],
+            excerpt: content.substring(0, 50) + "...",
+            fullContent: content,
+            category: "技术"
+        };
+
+        // 假设我们现在是“新增”：
+        window.blogPosts.push(newPost);
+
+        // 2. 构建新的 data.js 文件内容字符串
+        const fileContent = `window.blogPosts = ${JSON.stringify(window.blogPosts, null, 2)};`;
+
+        // 3. 调用 API 推送
+        status.innerText = "正在同步到 GitHub...";
+        const success = await githubAPI("PUT", fileContent, token);
+
+        if (success) {
+            status.innerText = "更新成功！页面将在数分钟后生效。";
+        } else {
+            status.innerText = "更新失败，请检查 Token 权限或仓库设置。";
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+/*帮我用html、javascript、css等语言建立一个博客网页用于记录我的文章笔记，要求支持对选定文章的实时增删查改，同时支持文章内容中代码段的特定标注和图片添加，这个网页的挂载的目标平台是GitHub Pages，所以数据的持久化通过在网页中添加按钮，在按钮上挂载git的api以实现通过网页修改git库中的数据文件*/
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'PingFang SC', sans-serif; background-color: #f4f7f6; color: #333; line-height: 1.6; }
+
+/* 导航栏 */
+header { background: #2c3e50; color: white; padding: 1rem 0; position: sticky; top: 0; z-index: 100; }
+nav { display: flex; justify-content: space-between; align-items: center; max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+nav ul { display: flex; list-style: none; }
+nav ul li { margin-left: 20px; }
+nav a { color: white; text-decoration: none; font-weight: bold; }
+
+/* 布局 */
+.container { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+
+/* 文章卡片 */
+.post-card { background: white; padding: 25px; margin-bottom: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+.post-card h2 { margin-bottom: 10px; color: #2c3e50; }
+.post-meta { font-size: 0.9rem; color: #7f8c8d; margin-bottom: 15px; }
+.read-more { display: inline-block; margin-top: 15px; color: #3498db; cursor: pointer; }
+
+/* 侧边栏 */
+.card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
+.tags span { background: #eee; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; margin: 3px; display: inline-block; }
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .container { grid-template-columns: 1fr; }
+}

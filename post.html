@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>文章详情</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <nav>
+        <div class="logo">MyNotes</div>
+        <ul><li><a href="index.html">返回首页</a></li></ul>
+    </nav>
+</header>
+
+<main class="container">
+    <article class="post-card">
+        <h1 id="detail-title">正在加载...</h1>
+        <div class="post-meta" id="detail-meta"></div>
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+        <div id="detail-content" style="white-space: pre-wrap;"></div> </article>
+</main>
+
+<script src="data.js"></script>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get('id');
+
+    // 使用 window.blogPosts 获取数据
+    const post = window.blogPosts[postId];
+
+    if (post) {
+        document.getElementById('detail-title').innerText = post.title;
+        document.getElementById('detail-meta').innerText = `${post.date} | ${post.category}`;
+        document.getElementById('detail-content').innerText = post.fullContent;
+        document.title = post.title;
+    } else {
+        document.getElementById('detail-title').innerText = "404";
+        document.getElementById('detail-content').innerText = "抱歉，未找到该文章。";
+    }
+</script>
+</body>
+</html>
