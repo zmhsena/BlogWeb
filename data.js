@@ -1,5 +1,12 @@
 window.blogPosts = [
   {
+    "title": "数据分离测试",
+    "date": "2026-02-10",
+    "excerpt": "![屏幕截图_2025-12-18_174716.png](images/屏幕截图_2025-12-18_174716.png)...",
+    "fullContent": "![屏幕截图_2025-12-18_174716.png](images/屏幕截图_2025-12-18_174716.png)",
+    "category": "测试"
+  },
+  {
     "title": "测试标题",
     "date": "2026-02-10",
     "excerpt": "测试代码块    public void InitHeroBlindBox()        {            var btnCoin = transform.Find(\"g-C...",
