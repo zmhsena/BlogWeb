@@ -179,27 +179,31 @@
     }
 
     // 处理图片文件
+    // admin.html 中的 processImage 函数
     async function processImage(file) {
         const textarea = document.getElementById('post-content');
-        const fileName = `img_${Date.now()}_${file.name}`; // 加上时间戳防止重名
+        const fileName = `img_${Date.now()}_${file.name}`; // 生成唯一文件名
         const reader = new FileReader();
 
         reader.onload = async (e) => {
-            const base64Content = e.target.result.split(',')[1]; // 获取纯 base64 部分
+            const base64Content = e.target.result.split(',')[1];
 
-            // 1. 记录到待上传列表
+            // 1. 将数据存入内存，供稍后上传和预览使用
             pendingImages.push({
                 name: fileName,
-                content: base64Content
+                content: base64Content,
+                localUrl: e.target.result // 保留完整的 data:image 格式用于预览
             });
 
-            // 2. 在编辑框插入 Markdown 语法
-            // 注意：这里先用 Base64 渲染以实现“即时预览”，保存时会被替换为正式路径
-            const imgMarkdown = `![${file.name}](data:image/png;base64,${base64Content})\n`;
+            // 2. 仅在编辑框插入简洁的 Markdown 引用，不再有长串乱码
+            const imgMarkdown = `![${file.name}](images/${fileName})`;
             const start = textarea.selectionStart;
-            textarea.value = textarea.value.substring(0, start) + imgMarkdown + textarea.value.substring(textarea.selectionEnd);
+            const end = textarea.selectionEnd;
 
-            updatePreview(); // 触发之前定义的实时预览函数
+            textarea.value = textarea.value.substring(0, start) + imgMarkdown + textarea.value.substring(end);
+
+            // 3. 更新预览
+            updatePreview();
         };
         reader.readAsDataURL(file);
     }
@@ -217,13 +221,23 @@
         window.scrollTo(0, document.body.scrollHeight);
     }
     // 实时更新预览
+    // admin.html 中的 updatePreview 函数
     function updatePreview() {
-        const content = document.getElementById('post-content').value;
+        let content = document.getElementById('post-content').value;
         const previewArea = document.getElementById('live-preview');
 
-        // 使用与详情页一致的配置渲染
+        // 关键步骤：在预览前，将内容中引用的 images/ 路径临时替换为 Base64 以便显示
+        pendingImages.forEach(img => {
+            const fakePath = `images/${img.name}`;
+            // 使用 split/join 实现全局替换
+            content = content.split(fakePath).join(img.localUrl);
+        });
+
         marked.setOptions({ breaks: true, gfm: true });
         previewArea.innerHTML = marked.parse(content || "*等待输入内容...*");
+
+        // 如果有代码块，顺便触发高亮
+        if (window.hljs) hljs.highlightAll();
     }
 
     // 优化的格式插入函数
@@ -262,46 +276,52 @@
 
     // 修改 admin.html 中的 savePost 函数
     async function savePost() {
-        // ... 前置校验逻辑 ...
+        const token = document.getElementById('token-input').value;
+        const btn = document.getElementById('submit-btn');
+        if (!token) return alert("请先输入并保存 Token");
 
-        btn.innerText = "上传图片中...";
+        btn.disabled = true;
+        btn.innerText = "正在上传图片...";
 
         try {
-            let content = document.getElementById('post-content').value;
-
-            // 1. 先上传所有图片
+            // 1. 直接循环上传图片，路径已经与正文一致
             for (let img of pendingImages) {
-                const imgPath = `images/${img.name}`;
-                const success = await uploadFileToGitHub(imgPath, img.content, token);
-                if (success) {
-                    // 上传成功后，将正文里的 Base64 替换为真实的 GitHub 图片路径
-                    // 这样 post.html 访问时就是引用 GitHub 上的图片了
-                    const base64Pattern = `data:image/png;base64,${img.content}`;
-                    content = content.replace(base64Pattern, imgPath);
-                }
+                await uploadFileToGitHub(`images/${img.name}`, img.content, token);
             }
 
-            // 2. 准备最终的文章数据
+            // 2. 直接获取正文，此时里面已经是 ![alt](images/filename)
+            const finalContent = document.getElementById('post-content').value;
+
             const newPost = {
                 title: document.getElementById('post-title').value,
-                // ... 其他字段 ...
-                fullContent: content // 使用替换路径后的内容
+                date: new Date().toISOString().split('T')[0],
+                excerpt: finalContent.substring(0, 100).replace(/[#*`\n]/g, '') + "...",
+                fullContent: finalContent,
+                category: document.getElementById('post-category').value || "未分类"
             };
 
-            // 3. 同步 data.js
-            const updatedPosts = [newPost, ...window.blogPosts];
-            const syncSuccess = await syncToGitHub(updatedPosts, token);
+            // 3. 同步到 data.js
+            const editIndex = parseInt(document.getElementById('edit-index').value);
+            let updatedPosts = [...window.blogPosts];
 
-            if (syncSuccess) {
-                alert("全部同步成功！");
-                pendingImages = []; // 清空缓存
-                renderAdminList();
+            if (editIndex === -1) {
+                updatedPosts.unshift(newPost);
+            } else {
+                updatedPosts[editIndex] = newPost;
             }
-        } catch (error) {
-            console.error(error);
+
+            const success = await syncToGitHub(updatedPosts, token);
+            if (success) {
+                alert("同步成功！");
+                pendingImages = []; // 清空待上传列表
+                location.reload();
+            }
+        } catch (err) {
+            alert("保存失败，请检查控制台");
+            console.error(err);
         } finally {
-            btn.innerText = "🚀 发布并同步到 GitHub";
             btn.disabled = false;
+            btn.innerText = "🚀 发布并同步到 GitHub";
         }
     }
 
