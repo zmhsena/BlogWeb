@@ -1,60 +1,81 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sena的个人笔记博客</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Sena 的个人技术笔记与学习记录。">
+    <title>Sena's notebook | 个人技术笔记</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-<header>
-    <nav>
-        <div class="logo">Sena's blog</div>
-        <ul>
-            <li><a href="admin.html" class="admin-link">管理后台</a></li>
-        </ul>
-    </nav>
-</header>
+<body class="site-page listing-page">
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
 
-<main class="container">
-    <section id="post-list">
-    </section>
-
-    <aside>
-        <div class="card">
-            <h3>关于我</h3>
-            <p>这是芝麻sena的个人博客，主要会记录我平时学习的总结心得，权当是个读书笔记吧，如果有人找到这个网站也可以当作面经的参考</p>
+    <header class="site-header">
+        <div class="site-shell header-inner">
+            <a class="brand" href="index.html" aria-label="Sena's notebook 首页">
+                <span class="brand-mark" aria-hidden="true">SN</span>
+                <span class="brand-name">Sena's notebook</span>
+            </a>
+            <nav class="primary-nav" aria-label="主导航">
+                <a href="#notes">文章</a>
+                <a href="#about">关于</a>
+                <a class="nav-action" href="admin.html">管理后台</a>
+            </nav>
         </div>
-    </aside>
-</main>
+    </header>
 
-<script src="githubService.js"></script>
-<script src="script.js"></script>
-<script>
-    // 动态加载当前分支的 data.js
-    (async function loadDataViaAPI() {
-        const branch = GITHUB_CONFIG.branch;
-        const repo = GITHUB_CONFIG.repo;
-        // 使用 API 路径
-        const apiUrl = `https://api.github.com/repos/${repo}/contents/data.js?ref=${branch}`;
+    <main id="main-content" class="site-shell listing-main">
+        <section class="listing-intro" aria-labelledby="page-title">
+            <p class="eyebrow">PERSONAL NOTEBOOK / 个人笔记</p>
+            <h1 id="page-title">把学到的东西，写成可回看的笔记。</h1>
+            <p class="intro-copy">这里记录游戏开发、工具实践，以及那些值得在以后重新打开的思考。</p>
+            <div class="intro-meta" aria-label="博客信息">
+                <span>持续记录中</span>
+                <span class="meta-dot" aria-hidden="true"></span>
+                <span>以中文为主</span>
+            </div>
+        </section>
 
-        try {
-            const res = await fetch(apiUrl);
-            const json = await res.json();
-            // API 返回的内容是 Base64 编码的，需要解码
-            const content = decodeURIComponent(escape(atob(json.content)));
+        <div class="listing-grid">
+            <section id="notes" class="notes-column" aria-labelledby="notes-title">
+                <div class="section-heading">
+                    <div>
+                        <p class="section-kicker">NOTES</p>
+                        <h2 id="notes-title">最近记录</h2>
+                    </div>
+                    <span id="post-count" class="count-label" aria-live="polite"></span>
+                </div>
+                <div id="listing-status" class="listing-status" aria-live="polite"></div>
+                <div id="post-list" class="post-list" data-state="loading" aria-busy="true">
+                    <div class="loading-line" aria-hidden="true"><span></span><span></span><span></span></div>
+                </div>
+            </section>
 
-            // 执行这段内容（因为它定义了 window.blogPosts）
-            const script = document.createElement('script');
-            script.text = content;
-            document.head.appendChild(script);
+            <aside id="about" class="about-rail" aria-labelledby="about-title">
+                <div class="about-rule" aria-hidden="true"></div>
+                <p class="section-kicker">ABOUT</p>
+                <h2 id="about-title">你好，我是 Sena。</h2>
+                <p>这是我的个人笔记本。写下学习过程，也保留还没有完全想明白的问题。</p>
+                <dl class="about-facts">
+                    <div><dt>主题</dt><dd>游戏开发 · 工具 · 阅读</dd></div>
+                    <div><dt>更新</dt><dd>不定期，想到就写</dd></div>
+                </dl>
+                <a class="text-link" href="mailto:hello@example.com">联系我 <span aria-hidden="true">↗</span></a>
+            </aside>
+        </div>
+    </main>
 
-            renderPosts(); // 渲染
-        } catch (e) {
-            console.error("API 获取失败", e);
-        }
-    })();
-</script>
-<script src="cursor-effect.js"></script>
+    <footer class="site-footer">
+        <div class="site-shell footer-inner">
+            <span>© Sena's notebook</span>
+            <span>Notes made slowly, kept carefully.</span>
+        </div>
+    </footer>
+
+    <script src="githubService.js"></script>
+    <script src="data-loader.js"></script>
+    <script src="render-utils.js"></script>
+    <script src="script.js"></script>
+    <script src="cursor-effect.js"></script>
 </body>
 </html>

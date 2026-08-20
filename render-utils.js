@@ -35,8 +35,15 @@
         );
     }
 
-    function isSafeUrl(value) {
+    function isSafeDataImage(value) {
         const url = String(value ?? '').trim();
+        const match = url.match(/^data:image\/(?:avif|bmp|gif|jpe?g|png|webp);base64,([A-Za-z0-9+/]+={0,2})$/i);
+        return Boolean(match && match[1].length <= 8 * 1024 * 1024 && match[1].length % 4 === 0);
+    }
+
+    function isSafeUrl(value, options = {}) {
+        const url = String(value ?? '').trim();
+        if (options.allowDataImages && isSafeDataImage(url)) return true;
         if (!url || /^(?:javascript|vbscript|data):/i.test(url)) return false;
         if (url.startsWith('//')) return false;
         return SAFE_URL_PATTERN.test(url);
@@ -55,7 +62,7 @@
         }).filter(Boolean).join('; ');
     }
 
-    function sanitizeWithDom(html, documentRef) {
+    function sanitizeWithDom(html, documentRef, options) {
         const Parser = root.DOMParser || (documentRef && documentRef.defaultView && documentRef.defaultView.DOMParser);
         if (typeof Parser !== 'function') return null;
         const parsed = new Parser().parseFromString(`<div>${html}</div>`, 'text/html');
@@ -73,7 +80,7 @@
                     return;
                 }
                 if (name === 'href' || name === 'src' || name === 'action' || name === 'formaction' || name === 'xlink:href') {
-                    if (!isSafeUrl(attribute.value)) element.removeAttribute(attribute.name);
+                    if (!isSafeUrl(attribute.value, options)) element.removeAttribute(attribute.name);
                     return;
                 }
                 if (name === 'style') {
@@ -99,20 +106,20 @@
         return container.innerHTML;
     }
 
-    function sanitizeWithoutDom(html) {
+    function sanitizeWithoutDom(html, options) {
         return String(html ?? '')
             .replace(/<\s*(script|iframe|object|embed|form|meta|link|base|template)\b[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
             .replace(/<\s*(script|iframe|object|embed|form|meta|link|base|template)\b[^>]*\/?\s*>/gi, '')
             .replace(/\s+on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
             .replace(/\s+(href|src|action|formaction)\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, (full, name, quoted) => {
                 const value = quoted.replace(/^['"]|['"]$/g, '');
-                return isSafeUrl(value) ? full : '';
+                return isSafeUrl(value, options) ? full : '';
             });
     }
 
     function sanitizeMarkdownHtml(html, options = {}) {
         const documentRef = options.document || root.document;
-        return sanitizeWithDom(String(html ?? ''), documentRef) ?? sanitizeWithoutDom(html);
+        return sanitizeWithDom(String(html ?? ''), documentRef, options) ?? sanitizeWithoutDom(html, options);
     }
 
     function statusMarkup(kind, title, detail = '') {

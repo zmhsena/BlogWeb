@@ -1,0 +1,21 @@
+<!doctype html>
+<meta charset="utf-8">
+<iframe id="probe" src="/index.html?layout-debug=1" style="width:360px;height:1000px;border:0"></iframe>
+<script>
+  const probe = document.getElementById('probe');
+  probe.addEventListener('load', () => setTimeout(() => {
+    const doc = probe.contentDocument;
+    const selectors = ['.site-shell', '.header-inner', '.brand', '.primary-nav', '.listing-intro', '.listing-grid', '.notes-column', '.listing-status', '.status'];
+    const boxes = Object.fromEntries(selectors.map((selector) => {
+      const node = doc.querySelector(selector);
+      if (!node) return [selector, null];
+      const rect = node.getBoundingClientRect();
+      return [selector, { left: rect.left, right: rect.right, width: rect.width, height: rect.height, display: getComputedStyle(node).display }];
+    }));
+    document.body.textContent = JSON.stringify({
+      viewport: { width: doc.documentElement.clientWidth, height: doc.documentElement.clientHeight },
+      scroll: { width: doc.documentElement.scrollWidth, body: doc.body.scrollWidth },
+      boxes
+    });
+  }, 3500));
+</script>

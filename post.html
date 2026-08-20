@@ -1,93 +1,72 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>文章详情 - Sena's blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Sena's notebook 文章详情。">
+    <title>文章 | Sena's notebook</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+<body class="site-page article-page">
+    <a class="skip-link" href="#main-content">跳到主要内容</a>
+
+    <header class="site-header">
+        <div class="site-shell header-inner">
+            <a class="brand" href="index.html" aria-label="Sena's notebook 首页">
+                <span class="brand-mark" aria-hidden="true">SN</span>
+                <span class="brand-name">Sena's notebook</span>
+            </a>
+            <nav class="primary-nav" aria-label="主导航">
+                <a href="index.html#notes">文章</a>
+                <a href="index.html#about">关于</a>
+                <a class="nav-action" href="admin.html">管理后台</a>
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content" class="site-shell article-main">
+        <nav class="breadcrumb" aria-label="面包屑导航">
+            <a class="back-link" href="index.html#notes"><span aria-hidden="true">←</span> 返回文章列表</a>
+            <span aria-hidden="true">/</span>
+            <span>文章详情</span>
+        </nav>
+
+        <div class="article-layout">
+            <article class="article-shell">
+                <header class="article-header">
+                    <p id="detail-kicker" class="eyebrow">NOTE / 正在读取</p>
+                    <h1 id="detail-title">正在加载文章...</h1>
+                    <div id="detail-meta" class="article-meta" aria-live="polite"></div>
+                </header>
+                <div id="detail-status" class="article-status" aria-live="polite"></div>
+                <div id="detail-content" class="markdown-body"></div>
+                <footer class="article-footer">
+                    <a class="back-link" href="index.html#notes"><span aria-hidden="true">←</span> 返回文章列表</a>
+                    <button class="top-button" type="button" data-scroll-top aria-label="返回顶部">返回顶部 <span aria-hidden="true">↑</span></button>
+                </footer>
+            </article>
+
+            <aside class="article-rail" aria-label="阅读提示">
+                <span class="rail-label">READING NOTE</span>
+                <p>慢一点读。好的笔记不只保存答案，也保存当时的问题。</p>
+            </aside>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="site-shell footer-inner">
+            <span>© Sena's notebook</span>
+            <a class="text-link" href="index.html">回到首页 <span aria-hidden="true">↗</span></a>
+        </div>
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="githubService.js"></script>
-</head>
-<body>
-<header>
-    <nav><div class="logo">Sena's blog</div><ul><li><a href="index.html">返回首页</a></li></ul></nav>
-</header>
-
-<main class="container" style="display: block; max-width: 850px;">
-    <article class="post-card">
-        <h1 id="detail-title">正在加载最新文章...</h1>
-        <div class="post-meta" id="detail-meta"></div>
-        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-        <div id="detail-content"></div>
-    </article>
-</main>
-
-<script>
-    // 【关键修复 2】删掉了原来的 document.write 逻辑，完全改用下面的异步加载
-
-    window.onload = async function() {
-        const params = new URLSearchParams(window.location.search);
-        const id = params.get('id');
-
-        // 1. 从远程获取最新数据
-        const branch = GITHUB_CONFIG.branch;
-        const repo = GITHUB_CONFIG.repo;
-        const apiUrl = `https://api.github.com/repos/${repo}/contents/data.js?ref=${branch}&t=${Date.now()}`;
-
-        try {
-            const res = await fetch(apiUrl);
-            if (!res.ok) throw new Error("无法连接到 GitHub 存储库");
-
-            const json = await res.json();
-            // 解码并执行数据脚本
-            const contentStr = decodeURIComponent(escape(atob(json.content)));
-            const scriptEval = document.createElement('script');
-            scriptEval.text = contentStr;
-            document.head.appendChild(scriptEval);
-
-            console.log("详情页数据同步成功");
-
-            // 2. 只有数据加载完后，才执行渲染
-            renderPostDetail(id);
-
-        } catch (e) {
-            console.error("加载失败:", e);
-            document.getElementById('detail-title').innerText = "数据同步失败，请检查网络或配置";
-        }
-    };
-
-    function renderPostDetail(id) {
-        // 检查全局变量是否已由加载的远程脚本定义
-        if (!window.blogPosts || !window.blogPosts[id]) {
-            document.getElementById('detail-title').innerText = "文章不存在 (ID: " + id + ")";
-            return;
-        }
-
-        const post = window.blogPosts[id];
-
-        // 设置标题和元数据
-        document.title = post.title;
-        document.getElementById('detail-title').innerText = post.title;
-        document.getElementById('detail-meta').innerText = `${post.date} | ${post.category}`;
-
-        // 配置 Marked
-        marked.setOptions({ breaks: true, gfm: true });
-
-        // 处理内容中的图片路径
-        const rawBaseUrl = getRawRoot();
-        let content = post.fullContent;
-        // 将相对路径 images/ 替换为当前开发分支的远程绝对路径
-        content = content.split('images/').join(rawBaseUrl + 'images/');
-
-        document.getElementById('detail-content').innerHTML = marked.parse(content);
-
-        // 代码高亮
-        document.querySelectorAll('pre code').forEach((el) => {
-            hljs.highlightElement(el);
-        });
-    }
-</script>
-<script src="cursor-effect.js"></script>
+    <script src="data-loader.js"></script>
+    <script src="render-utils.js"></script>
+    <script src="post.js"></script>
+    <script src="cursor-effect.js"></script>
 </body>
 </html>

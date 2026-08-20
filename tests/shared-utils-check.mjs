@@ -81,5 +81,10 @@ assert.equal(resolveImageUrls('![alt](images/pic.png)', 'https://raw.test/branch
 assert.match(statusMarkup('error', '<失效>', '详情'), /&lt;失效&gt;/);
 assert.doesNotMatch(sanitizeMarkdownHtml('<script>alert(1)</script><p onclick="bad()">ok</p>'), /<script|onclick=/i);
 assert.doesNotMatch(sanitizeMarkdownHtml('<a href="//attacker.example">外部</a>'), /href=/i);
+assert.doesNotMatch(sanitizeMarkdownHtml('<img src="data:image/svg+xml;base64,PHN2Zy8+">'), /src=/i);
+assert.match(
+  sanitizeMarkdownHtml('<img src="data:image/png;base64,AA==">', { allowDataImages: true }),
+  /src="data:image\/png;base64,AA=="/i
+);
 
 console.log('SHARED_UTILS_OK');

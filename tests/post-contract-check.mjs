@@ -101,4 +101,31 @@ const invalid = await post.initPostPage({ document: documentRef, search: '?id=ba
 assert.equal(invalid.reason, 'invalid-id');
 assert.match(elements.get('detail-status').innerHTML, /有效的 id/);
 
+const fallbackElements = new Map([
+  ['detail-kicker', makeElement()],
+  ['detail-title', makeElement()],
+  ['detail-meta', makeElement()],
+  ['detail-status', makeElement()],
+  ['detail-content', makeElement()]
+]);
+const fallbackDocument = {
+  getElementById(id) { return fallbackElements.get(id) || null; },
+  querySelector() { return null; }
+};
+assert.equal(
+  post.renderPostDetail(
+    {
+      title: 'Offline note',
+      date: '2026-08-20',
+      category: 'Note',
+      fullContent: '## Offline\n\n```js\nalert(1)\n```\n\n![image](images/photo.png)'
+    },
+    { document: fallbackDocument, marked: null, rawRoot: 'https://raw.example/branch/' }
+  ),
+  true
+);
+assert.match(fallbackElements.get('detail-content').innerHTML, /<pre><code/);
+assert.match(fallbackElements.get('detail-content').innerHTML, /raw\.example\/branch\/images\/photo\.png/);
+assert.doesNotMatch(fallbackElements.get('detail-content').innerHTML, /!\[/);
+
 console.log('POST_CONTRACT_OK');
