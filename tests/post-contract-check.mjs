@@ -32,12 +32,15 @@ function makeElement() {
 }
 
 const contentElement = makeElement();
+const imageElements = [makeElement(), makeElement()];
 const codeElement = {
   classList: { contains: () => false },
   setAttribute() {},
   removeAttribute() {}
 };
-contentElement.querySelectorAll = (selector) => selector === 'pre code' ? [codeElement] : [];
+contentElement.querySelectorAll = (selector) => selector === 'pre code'
+  ? [codeElement]
+  : selector === 'img' ? imageElements : [];
 const elements = new Map([
   ['detail-kicker', makeElement()],
   ['detail-title', makeElement()],
@@ -80,6 +83,8 @@ assert.equal(elements.get('detail-title').textContent, 'Safe title');
 assert.match(elements.get('detail-meta').innerHTML, /2026-08-20/);
 assert.match(elements.get('detail-content').innerHTML, /raw\.example\/branch\/images\/photo\.png/);
 assert.doesNotMatch(elements.get('detail-content').innerHTML, /<script/i);
+assert.equal(imageElements[0].attributes.loading, undefined);
+assert.equal(imageElements[1].attributes.loading, 'lazy');
 assert.match(elements.get('detail-status').innerHTML, /Remote unavailable/);
 assert.equal(highlighted, 1);
 assert.equal(typeof topButton.listeners.click, 'function');
