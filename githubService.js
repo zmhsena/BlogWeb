@@ -7,6 +7,36 @@ const GITHUB_CONFIG = {
 };
 
 // 新增：获取当前配置分支的原始资源根目录
+async function githubFetch(url, options = {}) {
+    const { fetchImpl, ...requestOptions } = options;
+    const fetcher = fetchImpl || (typeof fetch === 'function' ? fetch : null);
+    if (typeof fetcher !== 'function') {
+        const error = new Error('Fetch is not available');
+        error.kind = 'network';
+        throw error;
+    }
+
+    const response = await fetcher(url, requestOptions);
+    if (!response || response.ok !== true) {
+        let detail = '';
+        if (response && typeof response.text === 'function') {
+            try {
+                const textResponse = typeof response.clone === 'function' ? response.clone() : response;
+                const body = await textResponse.text();
+                detail = body ? `: ${body.slice(0, 160)}` : '';
+            } catch (_) {
+                detail = '';
+            }
+        }
+        const error = new Error(`GitHub request failed${response && response.status ? ` (${response.status})` : ''}${detail}`);
+        error.kind = 'network';
+        error.status = response && response.status;
+        error.statusText = response && response.statusText;
+        throw error;
+    }
+    return response;
+}
+
 function getRawRoot() {
     return `https://raw.githubusercontent.com/${GITHUB_CONFIG.repo}/${GITHUB_CONFIG.branch}/`;
 }
@@ -42,4 +72,14 @@ async function updateGitHubData(newContent, token) {
         console.error("API 错误:", err);
         return false;
     }
+}
+
+if (typeof globalThis !== 'undefined') {
+    globalThis.GITHUB_CONFIG = GITHUB_CONFIG;
+    globalThis.githubFetch = githubFetch;
+    globalThis.getRawRoot = getRawRoot;
+}
+
+if (typeof module === 'object' && module.exports) {
+    module.exports = { GITHUB_CONFIG, githubFetch, getRawRoot, updateGitHubData };
 }
