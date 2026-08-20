@@ -1,37 +1,70 @@
-// cursor-effect.js
-(function() {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+(function (root) {
+    'use strict';
 
-    canvas.style.position = 'fixed';
-    canvas.style.top = '0';
-    canvas.style.left = '0';
-    canvas.style.pointerEvents = 'none'; // 确保不干扰点击
-    canvas.style.zIndex = '9999';
-    document.body.appendChild(canvas);
+    const MAX_PARTICLES = 120;
+    const documentRef = root.document;
+    if (!documentRef || !documentRef.body || typeof documentRef.createElement !== 'function') return;
 
-    let dots = [];
-    const color = '#3498db'; // 你可以改成和你 style.css 一致的蓝色
-
-    function resize() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+    function mediaMatches(query) {
+        if (typeof root.matchMedia !== 'function') return false;
+        try {
+            return root.matchMedia(query).matches === true;
+        } catch (_) {
+            return false;
+        }
     }
 
-    window.addEventListener('resize', resize);
-    resize();
+    // A cursor trail adds no value on touch devices or when motion is disabled.
+    if (mediaMatches('(prefers-reduced-motion: reduce)')
+        || mediaMatches('(pointer: coarse)')
+        || mediaMatches('(hover: none)')) return;
 
-    // 监听鼠标移动
-    window.addEventListener('mousemove', (e) => {
-        dots.push(new Dot(e.clientX, e.clientY));
-    });
+    const canvas = documentRef.createElement('canvas');
+    const context = canvas.getContext && canvas.getContext('2d');
+    if (!context) return;
+
+    canvas.setAttribute('aria-hidden', 'true');
+    canvas.style.position = 'fixed';
+    canvas.style.inset = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = '10';
+    documentRef.body.appendChild(canvas);
+
+    const dots = [];
+    const computed = typeof root.getComputedStyle === 'function'
+        ? root.getComputedStyle(documentRef.documentElement || documentRef.body)
+        : null;
+    const color = computed && typeof computed.getPropertyValue === 'function'
+        ? computed.getPropertyValue('--color-teal').trim() || '#1f6f68'
+        : '#1f6f68';
+    let paused = documentRef.visibilityState === 'hidden';
+    let frameId = null;
+
+    function resize() {
+        canvas.width = Math.max(1, root.innerWidth || documentRef.documentElement?.clientWidth || 1);
+        canvas.height = Math.max(1, root.innerHeight || documentRef.documentElement?.clientHeight || 1);
+    }
+
+    function schedule() {
+        if (paused || frameId !== null || typeof root.requestAnimationFrame !== 'function') return;
+        frameId = root.requestAnimationFrame(animate);
+    }
+
+    function stopFrame() {
+        if (frameId !== null && typeof root.cancelAnimationFrame === 'function') {
+            root.cancelAnimationFrame(frameId);
+        }
+        frameId = null;
+    }
 
     class Dot {
         constructor(x, y) {
             this.x = x;
             this.y = y;
             this.size = 3;
-            this.life = 1; // 寿命 1.0 -> 0
+            this.life = 1;
             this.velocity = {
                 x: (Math.random() - 0.5) * 1,
                 y: (Math.random() - 0.5) * 1
@@ -41,34 +74,54 @@
         update() {
             this.x += this.velocity.x;
             this.y += this.velocity.y;
-            this.life -= 0.02; // 消失速度
-            if (this.size > 0.1) this.size -= 0.05;
+            this.life -= 0.025;
+            this.size = Math.max(0.1, this.size - 0.05);
         }
 
         draw() {
-            this.color = `hsl(${Math.random() * 360}, 70%, 60%)`;
-            ctx.fillStyle = this.color;
-            ctx.globalAlpha = this.life;
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fill();
+            context.fillStyle = color;
+            context.globalAlpha = this.life;
+            context.beginPath();
+            context.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            context.fill();
         }
     }
 
     function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        for (let i = 0; i < dots.length; i++) {
-            dots[i].update();
-            dots[i].draw();
-
-            if (dots[i].life <= 0) {
-                dots.splice(i, 1);
-                i--;
-            }
+        frameId = null;
+        if (paused) return;
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        for (let index = dots.length - 1; index >= 0; index -= 1) {
+            const dot = dots[index];
+            dot.update();
+            dot.draw();
+            if (dot.life <= 0) dots.splice(index, 1);
         }
-        requestAnimationFrame(animate);
+        context.globalAlpha = 1;
+        if (dots.length) schedule();
     }
 
-    animate();
-})();
+    function addDot(x, y) {
+        if (paused) return;
+        if (dots.length >= MAX_PARTICLES) dots.shift();
+        dots.push(new Dot(x, y));
+        schedule();
+    }
+
+    function handleVisibility() {
+        paused = documentRef.visibilityState === 'hidden';
+        if (paused) {
+            dots.length = 0;
+            stopFrame();
+            context.clearRect(0, 0, canvas.width, canvas.height);
+        } else {
+            schedule();
+        }
+    }
+
+    resize();
+    root.addEventListener?.('resize', resize, { passive: true });
+    root.addEventListener?.('mousemove', (event) => addDot(event.clientX, event.clientY), { passive: true });
+    documentRef.addEventListener?.('visibilitychange', handleVisibility);
+    schedule();
+})(typeof globalThis !== 'undefined' ? globalThis : window);
