@@ -97,4 +97,8 @@ const missing = await post.initPostPage({
 assert.equal(missing.ok, false);
 assert.match(elements.get('detail-status').innerHTML, /找不到|不存在|未找到/);
 
+const invalid = await post.initPostPage({ document: documentRef, search: '?id=bad' });
+assert.equal(invalid.reason, 'invalid-id');
+assert.match(elements.get('detail-status').innerHTML, /有效的 id/);
+
 console.log('POST_CONTRACT_OK');
