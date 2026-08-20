@@ -135,6 +135,10 @@
 
         const title = getElement(documentRef, 'detail-title');
         if (title) title.textContent = '正在加载文章...';
+        const loadingMeta = getElement(documentRef, 'detail-meta');
+        const loadingContent = getElement(documentRef, 'detail-content');
+        if (loadingMeta) loadingMeta.innerHTML = '';
+        if (loadingContent) loadingContent.innerHTML = '';
         setStatus(documentRef, 'loading', '正在读取文章');
 
         const config = options.config || root.GITHUB_CONFIG || {};
